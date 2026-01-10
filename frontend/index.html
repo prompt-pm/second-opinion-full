@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en" class="dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, 
+    viewport-fit=cover, user-scalable=no">
+    <meta property="og:title" content="say less - choose with confidence">
+    <meta property="og:description" content="say less - choose with confidence">
+    <meta property="og:url" content="https://oksayless.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="say less - choose with confidence">
+    <meta name="twitter:description" content="say less - choose with confidence">
+    <title>say less</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Import local modules -->
+    <script type="module" src="/src/main.js"></script>
+    <script>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init('phc_A0E8UGmsyTtCZuNhafJ5ywDXMp4gSRHESjjr5xDyVDn', {
+            api_host:'https://us.i.posthog.com',
+            person_profiles: 'identified_only' // or 'always' to create profiles for anonymous users as well
+        })
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11420446469"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'AW-11420446469');
+    </script>
+    <!-- Event snippet for Sign-up conversion page -->
+    <script>
+        function gtag_report_conversion(url) {
+            var callback = function () {
+                if (typeof(url) != 'undefined') {
+                    window.location = url;
+                }
+            };
+            gtag('event', 'conversion', {
+                'send_to': 'AW-11420446469/aKL7CPjJmOsZEIXe2MUq',
+                'event_callback': callback
+            });
+            return false;
+        }
+    </script>
+    <style>
+        /* Drag and drop styles */
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+            transition: all 0.05s ease;
+        }
+        
+        /* Mobile dragging style - no transition for smooth movement */
+        .touch-dragging {
+            position: absolute;
+            opacity: 0.9;
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            pointer-events: none;
+            width: calc(100% - 2rem); /* Account for padding */
+            max-width: 100%;
+            transition: none; /* Disable transitions for direct movement */
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 0.5rem;
+        }
+        
+        .dark .touch-dragging {
+            background-color: rgba(31, 41, 55, 0.95);
+        }
+        
+        /* Drag over indicator */
+        .drag-over {
+            border: 2px dashed #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.05) !important;
+            transition: all 0.05s ease-out !important;
+        }
+        
+        /* Placeholder for the dragged item's original position */
+        .drag-placeholder {
+            background-color: rgba(203, 213, 225, 0.3) !important;
+            border: 2px dashed #cbd5e1 !important;
+            box-shadow: none !important;
+            height: 60px;
+            opacity: 0.6 !important;
+            transform: none !important;
+            transition: all 0.05s ease-out !important;
+        }
+        
+        /* Transition for smooth animations */
+        .bg-white, .bg-gray-800 {
+            transition: all 0.05s ease;
+        }
+        
+        /* Faster transition for drag interactions */
+        li[draggable="true"] {
+            transition: all 0.05s ease;
+        }
+        
+        /* Mobile touch styles */
+        @media (hover: none) and (pointer: coarse) {
+            /* Always show grip on touch devices */
+            .todo-grip {
+                opacity: 0.7;
+                min-width: 30px;
+                min-height: 30px;
+                padding: 5px;
+                margin: -5px;
+                background-color: rgba(0, 0, 0, 0.03);
+                border-radius: 4px;
+            }
+            
+            .dark .todo-grip {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+            
+            /* Enhance visual feedback during touch drag */
+            .dragging {
+                transform: scale(1.03);
+                box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            
+            /* Larger touch targets for mobile */
+            .todo-grip i {
+                font-size: 1.2rem;
+            }
+            
+            /* Always show edit button on mobile */
+            .group button[title="Edit message"] {
+                opacity: 0.7 !important;
+                background-color: rgba(0, 0, 0, 0.05);
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                top: 8px;
+                right: 8px;
+            }
+            
+            .group button[title="Edit message"] i {
+                font-size: 1.1rem;
+            }
+            
+            .dark .group button[title="Edit message"] {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            /* Make editable area more touch-friendly */
+            .editable-message {
+                min-height: 60px;
+                padding: 10px !important;
+                font-size: 16px !important; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Desktop styles for edit button */
+        @media (hover: hover) {
+            .group button[title="Edit message"] {
+                opacity: 0 !important;
+            }
+            
+            .group:hover button[title="Edit message"] {
+                opacity: 0.7 !important;
+            }
+            
+            /* Smooth transition for editable area */
+            .editable-message {
+                transition: all 0.2s ease;
+            }
+        }
+        
+        /* Improved textarea styles for mobile */
+        #situation {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+            font-size: 16px !important; /* Prevents iOS zoom */
+            padding-bottom: 48px !important; /* Extra padding at bottom to avoid text being hidden by button */
+        }
+        
+        @media (max-width: 640px) {
+            #situation {
+                min-height: 120px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen flex flex-col" x-data="app" x-init="init">
+    <!-- Add sign in button container -->
+    <div class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 p-2 sm:p-4 flex justify-between items-center">
+        <!-- Logo -->
+        <div class="flex items-center pl-2 sm:pl-4 cursor-pointer" @click="resetForm()">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">say less</h1>
+            <!-- Dark mode toggle moved next to logo -->
+            <button 
+                @click.stop="toggleDarkMode()" 
+                class="flex items-center text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 font-medium ml-2 sm:ml-3 text-sm sm:text-base"
+                title="Toggle Dark Mode"
+            >
+                <i class="fas text-lg sm:text-xl" :class="darkMode ? 'fa-moon' : 'fa-sun'"></i>
+            </button>
+        </div>
+        
+        <!-- Sign in and user buttons -->
+        <div class="flex items-center pr-2 sm:pr-4">
+            <select x-model="selectedAdvisor" class="border rounded text-sm mr-2 sm:mr-4 dark:bg-gray-800 dark:border-gray-700">
+                <option value="thought_partner">thought partner</option>
+                <option value="best_friend">best friend</option>
+                <option value="pastor">pastor</option>
+                <option value="professor">professor</option>
+                <option value="younger_sibling">younger sibling</option>
+                <option value="parent">parent</option>
+                <option value="therapist">therapist</option>
+                <option value="custom">custom</option>
+            </select>
+            <input x-show="selectedAdvisor === 'custom'" x-model="customAdvisor" placeholder="custom advisor" class="border rounded text-sm mr-2 sm:mr-4 px-2 py-1 dark:bg-gray-800 dark:border-gray-700" />
+            <button 
+                @click="startNewDecision()" 
+                class="flex items-center text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 font-medium mr-2 sm:mr-4 text-sm sm:text-base"
+                title="New Decision"
+                x-show="currentView === 'conversation'"
+            >
+                <i class="fas fa-plus text-lg sm:text-xl"></i>
+                <span class="ml-1 sm:ml-2">new</span>
+            </button>
+            <button 
+                @click="shareDecision()" 
+                class="flex items-center text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 font-medium mr-2 sm:mr-4 text-sm sm:text-base"
+                title="Share Decision"
+                x-show="currentView === 'conversation' && messages.length > 0"
+            >
+                <i class="fas fa-share-alt text-lg sm:text-xl"></i>
+                <span class="ml-1 sm:ml-2">share</span>
+            </button>
+            <button 
+                @click="openHistoryModal()" 
+                class="flex items-center text-gray-700 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 font-medium mr-2 sm:mr-4 text-sm sm:text-base"
+                title="History"
+            >
+                <i class="fas fa-history text-lg sm:text-xl"></i>
+                <span class="ml-1 sm:ml-2">history</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main content area -->
+    <div class="flex-1 flex flex-col pt-12 sm:pt-16">
+        <!-- Initial Input UI - Only visible before first submission -->
+        <div x-show="currentView === 'input'" class="flex-1 flex items-center justify-center p-4">
+            <div class="max-w-3xl w-full mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md p-6 relative">
+                <div class="mb-4 sm:mb-6">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-0">get a second opinion</h1>
+                </div>
+                
+                <ul class="list-none mb-4 text-gray-700 dark:text-gray-300 text-sm sm:text-base space-y-2 sm:space-y-0 sm:flex sm:space-x-4">
+                    <li class="flex items-center">🤔 figure out what you want</li>
+                    <li class="flex items-center">⚡ decide faster</li>
+                    <li class="flex items-center">✅ take action</li>
+                </ul>
+
+                <div class="mb-4">
+                    <style>
+                        /* Mobile situation textarea styles */
+                        @media (hover: none) and (pointer: coarse) {
+                            .situation-container {
+                                display: flex;
+                                flex-direction: column;
+                            }
+                            .situation-mobile-button {
+                                display: flex;
+                                margin-top: 10px;
+                                width: 100%;
+                                padding: 12px;
+                                justify-content: center;
+                                align-items: center;
+                                border-radius: 8px;
+                            }
+                            .situation-desktop-button {
+                                display: none;
+                            }
+                            #situation {
+                                padding-right: 16px !important;
+                                min-height: 150px !important;
+                                border-radius: 8px !important;
+                            }
+                            .situation-button-text {
+                                margin-right: 8px;
+                                font-weight: 500;
+                            }
+                        }
+                        
+                        /* Desktop situation textarea styles */
+                        @media (hover: hover) {
+                            .situation-container {
+                                position: relative;
+                            }
+                            .situation-mobile-button {
+                                display: none;
+                            }
+                            .situation-desktop-button {
+                                display: flex;
+                                position: absolute;
+                                right: 8px;
+                                bottom: 12px;
+                                background-color: white;
+                                border-radius: 8px;
+                            }
+                            .dark .situation-desktop-button {
+                                background-color: #374151;
+                            }
+                        }
+                    </style>
+                    
+                    <div class="situation-container">
+                        <textarea 
+                            id="situation"
+                            x-model="situation"
+                            class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-sky-500 outline-none resize-none overflow-hidden min-h-[120px] leading-[1.5]"
+                            placeholder="what's your situation?"
+                            @keydown.enter.shift.prevent="$event.target.value += '\n'"
+                            @keydown.enter.prevent="submitChoices"
+                            rows="3"
+                            style="padding-top: 14px; padding-bottom: 14px; font-size: 16px; white-space: pre-wrap; word-break: break-word;"
+                            x-init="
+                                $el.style.height = ''; 
+                                $el.style.height = Math.max($el.scrollHeight, 120) + 'px';
+                                $el.focus();
+                            "
+                            @input="$nextTick(() => { 
+                                $el.style.height = ''; 
+                                $el.style.height = Math.max($el.scrollHeight, 120) + 'px';
+                            })"
+                        ></textarea>
+                        
+                        <!-- Mobile submit button (below textarea) -->
+                        <button
+                            @click="submitChoices"
+                            :disabled="!situation.trim() || isLoading"
+                            class="situation-mobile-button bg-sky-500 hover:bg-sky-700 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-500"
+                        >
+                            <span class="situation-button-text">Help me decide</span>
+                            <svg x-show="!isLoading" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            <svg x-show="isLoading" class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Desktop submit button (inside textarea) -->
+                        <div class="situation-desktop-button pl-2">
+                            <button
+                                @click="submitChoices"
+                                :disabled="!situation.trim() || isLoading"
+                                class="bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-500"
+                            >
+                                <svg x-show="!isLoading" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                                <svg x-show="isLoading" class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples section -->
+                <div class="flex items-center justify-end mt-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                        <button 
+                            @click="selectedExample = 'newJob'; fillExampleData(); submitChoices()"
+                            class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left border border-gray-200 dark:border-gray-700"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">💼</span>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">new role at work</span>
+                            </div>
+                        </button>
+                        <button 
+                            @click="selectedExample = 'moveCity'; fillExampleData(); submitChoices()"
+                            class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left border border-gray-200 dark:border-gray-700"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">🏠</span>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">new place to live</span>
+                            </div>
+                        </button>
+                        <button 
+                            @click="selectedExample = 'vacation'; fillExampleData(); submitChoices()"
+                            class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left border border-gray-200 dark:border-gray-700"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">✈️</span>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">new vacation spot</span>
+                            </div>
+                        </button>
+                        <button 
+                            @click="selectedExample = 'date'; fillExampleData(); submitChoices()"
+                            class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left border border-gray-200 dark:border-gray-700"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">♥️</span>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">new date</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div x-show="currentView === 'input'" class="text-center mt-2 mb-6">
+            <a href="#" @click.prevent="showVideoModal = true" class="text-blue-500 hover:text-blue-700 text-sm">See how it works</a>
+        </div>
+
+        <!-- Conversation View - Shows after first submission -->
+        <div x-show="currentView === 'conversation'" class="flex-1 flex flex-col">
+            <!-- Message display area -->
+            <div class="flex-1 overflow-y-auto p-2 sm:p-4 pb-40 sm:pb-48">
+                <!-- Messages in chronological order -->
+                <template x-for="(message, index) in messages" :key="index">
+                    <div class="mb-3 sm:mb-4 animate__animated animate__fadeIn">
+                        <!-- User message -->
+                        <div x-show="message.role === 'user'" class="max-w-3xl mx-auto bg-gray-200 dark:bg-gray-700 rounded-lg p-3 sm:p-4 text-gray-900 dark:text-white relative group" :data-message-index="index">
+                            <div class="pr-6">
+                                <!-- Regular message display (when not editing) -->
+                                <p x-show="!message.isEditing" x-text="message.content"></p>
+                                
+                                <!-- Editable message (when editing) -->
+                                <div 
+                                    x-show="message.isEditing" 
+                                    class="editable-message bg-white dark:bg-gray-600 p-2 rounded-md outline-none border border-sky-500 dark:border-sky-400" 
+                                    contenteditable="true"
+                                    @input="message.editedContent = $event.target.textContent"
+                                    @keydown.enter.prevent="saveEditedMessage(index)"
+                                    @keydown.escape.prevent="cancelEditMessage(index)"
+                                    x-init="$el.textContent = message.content"
+                                ></div>
+                                
+                                <!-- Edit controls (only shown when editing) -->
+                                <div x-show="message.isEditing" class="flex justify-end mt-2 space-x-2">
+                                    <button 
+                                        @click="cancelEditMessage(index)" 
+                                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        @click="saveEditedMessage(index)" 
+                                        class="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 rounded-md text-sm"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Edit icon (only shown when not editing) -->
+                            <button 
+                                x-show="!message.isEditing"
+                                @click="editMessage(index)"
+                                class="absolute right-2 top-2 text-gray-500 hover:text-sky-600 dark:text-gray-400 dark:hover:text-sky-400 transition-opacity flex items-center justify-center"
+                                title="Edit message"
+                            >
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- AI message -->
+                        <div x-show="message.role === 'assistant' && !message.type" class="max-w-3xl mx-auto text-gray-900 dark:text-white">
+                            <div x-html="message.content" class="markdown-content"></div>
+                            <!-- Suggested messages -->
+                            <div x-show="message.suggested_messages && message.suggested_messages.length > 0 && index === (messages.findLastIndex(msg => msg.role === 'assistant' && !msg.type)) && latestChoicesIndex === -1" class="mt-4">
+                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">Suggested replies:</div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="(suggestion, i) in message.suggested_messages" :key="i">
+                                        <button 
+                                            @click="userMessage = suggestion; isProcessingAction = true; $nextTick(() => { sendFollowUpMessage(); })"
+                                            class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-3 py-2 rounded-full text-sm transition-colors flex items-center"
+                                        >
+                                            <i class="fas fa-reply text-xs mr-2 text-gray-500 dark:text-gray-400"></i>
+                                            <span x-text="suggestion"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- PRIORITIES_UI_START -->
+                        <div x-show="message.role==='assistant' && message.type==='priorities'" class="max-w-3xl mx-auto text-gray-900 dark:text-white">
+                          <h2 class="text-lg font-medium mb-2 text-gray-900 dark:text-white">Rank your priorities:</h2>
+                          <ul class="space-y-2">
+                            <template x-for="(priority,pIndex) in message.content" :key="pIndex">
+                              <li draggable="true" :data-index="pIndex"
+                                  @dragstart="dragStart($event,message.content)"
+                                  @dragend="dragEnd($event,message.content)"
+                                  @dragover.prevent="dragOver($event)"
+                                  @dragleave="dragLeave($event)"
+                                  @drop="drop($event,message.content)"
+                                  @touchstart="priorityHandleTouchStart($event, pIndex, message.content)"
+                                  @touchmove="priorityHandleTouchMove($event)"
+                                  @touchend="priorityHandleTouchEnd($event, message.content)"
+                                  @touchcancel="priorityHandleTouchEnd($event, message.content)"
+                                  class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-move flex justify-between items-center">
+                                <span class="todo-grip text-gray-500 dark:text-gray-400 mr-2" aria-hidden="true">
+                                  <i class="fas fa-grip-vertical"></i>
+                                </span>
+                                <input type="text"
+                                       x-model="message.content[pIndex]"
+                                       class="flex-1 bg-transparent text-gray-900 dark:text-white outline-none p-0"
+                                       />
+                                <button @click.stop="removePriority(pIndex)"
+                                        class="text-red-500 ml-2">✖</button>
+                              </li>
+                            </template>
+                          </ul>
+                          <div class="mt-2 flex gap-2">
+                            <input type="text"
+                                     x-model="newPriority"
+                                     placeholder="Add custom priority"
+                                     class="flex-1 border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                     @keydown.enter.prevent="addPriority()">
+                            <button @click="addPriority()"
+                                    :disabled="!newPriority.trim()"
+                                    class="bg-gray-500 text-white px-4 py-2 rounded">Add</button>
+                          </div>
+                          <button @click="submitPriorities()"
+                                  class="mt-4 bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded">Submit ranking</button>
+                        </div>
+                        <!-- PRIORITIES_UI_END -->
+                        
+                        <!-- Choices UI as a special message type -->
+                        <div x-show="message.role === 'assistant' && message.type === 'choices'" class="max-w-3xl mx-auto">
+                            <!-- Options section -->
+                            <div class="mb-6 relative" :class="{'opacity-70 pointer-events-none': index !== latestChoicesIndex}">
+                                <!-- Inactive overlay for old decision results -->
+                                <div x-show="index !== latestChoicesIndex" class="absolute inset-0 flex items-center justify-center z-10">
+                                    <div class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-md text-sm text-gray-700 dark:text-gray-300">
+                                        Previous decision
+                                    </div>
+                                </div>
+                                
+                                <div class="flex sm:flex-row sm:items-center mb-2">
+                                    <h2 class="text-lg sm:text-xl font-medium text-gray-900 dark:text-white" x-text="message.content?.title || 'Your Options'"></h2>
+                                </div>
+                                
+                                <!-- Options cards -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <template x-for="(choice, choiceIndex) in index === latestChoicesIndex ? currentChoices : (message.content?.choices || [])" :key="choiceIndex">
+                                        <div 
+                                            class="bg-stone-100 dark:bg-gray-800 rounded-lg p-3 relative"
+                                            :class="{
+                                                'cursor-pointer': index === latestChoicesIndex,
+                                                'cursor-default': index !== latestChoicesIndex,
+                                                'ring-2 ring-sky-500': index === latestChoicesIndex && choiceIndex === selectedOptionIndex
+                                            }"
+                                        >
+                                            <!-- Remove button (x) - only visible for the latest choices view -->
+                                            <button 
+                                                x-show="index === latestChoicesIndex"
+                                                @click.stop="removeChoice(choiceIndex)"
+                                                class="absolute top-2 right-2 h-6 w-6 flex items-center justify-center text-red-500 hover:text-red-700 bg-white dark:bg-gray-700 rounded-full opacity-70 hover:opacity-100 transition-opacity z-10"
+                                                title="Remove this option"
+                                            >
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                            
+                                            <!-- Main content - clickable for selection -->
+                                            <div 
+                                                @click="index === latestChoicesIndex && (selectedOptionIndex = choiceIndex)"
+                                                class="h-full"
+                                            >
+                                                <!-- Selected option indicator -->
+                                                <span 
+                                                    x-show="choiceIndex === selectedOptionIndex" 
+                                                    class="inline-block mb-2 text-sm bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 px-2 py-1 rounded-md"
+                                                >
+                                                    <i class="fas fa-check-circle mr-1"></i> Selected option
+                                                </span>
+                                                <h3 class="text-base sm:text-lg font-semibold mb-1 text-gray-900 dark:text-white pr-6" x-text="choice?.name"></h3>
+                                                <div class="space-y-1 text-xs sm:text-sm">
+                                                    <div class="flex items-start justify-between">
+                                                        <div class="flex items-start flex-1 mr-2">
+                                                            <span class="text-green-500 mr-1 flex-shrink-0">✓</span>
+                                                            <span class="text-gray-700 dark:text-gray-300" x-text="choice?.best_case_scenario"></span>
+                                                        </div>
+                                                        <div class="flex items-start flex-1">
+                                                            <span class="text-red-500 mr-1 flex-shrink-0">✗</span>
+                                                            <span class="text-gray-700 dark:text-gray-300" x-text="choice?.worst_case_scenario"></span>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Display explanation if it exists -->
+                                                    <div x-show="choice?.explanation" class="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                                                        <div class="text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
+                                                            <p><strong>Why it could be good:</strong> <span x-text="choice?.explanation"></span></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                
+                                <!-- Choose for me button - only shown for the last choices message -->
+                                <div class="mt-3 flex flex-wrap gap-2" x-show="index === (messages.findLastIndex(msg => msg.role === 'assistant' && msg.type === 'choices'))">
+                                    <button
+                                        @click="isProcessingAction = true; chooseForMe(); activeButtonLoading = 'choose'"
+                                        class="bg-sky-600 hover:bg-sky-700 text-white font-medium py-1.5 px-3 text-sm sm:text-base sm:py-2 sm:px-4 rounded inline-flex items-center"
+                                    >
+                                        <i class="fas fa-check-circle mr-1"></i> Choose for me
+                                    </button>
+                                    <button 
+                                        @click="isProcessingAction = true; addAlternative(); activeButtonLoading = 'add'"
+                                        class="bg-sky-600 hover:bg-sky-700 text-white font-medium py-1.5 px-3 text-sm sm:text-base sm:py-2 sm:px-4 rounded inline-flex items-center"
+                                    >
+                                        <i class="fas fa-plus mr-1"></i> Add option
+                                    </button>
+                                    <button 
+                                        @click="isProcessingAction = true; generateNextSteps(); activeButtonLoading = 'nextsteps'"
+                                        class="bg-sky-600 hover:bg-sky-700 text-white font-medium py-1.5 px-3 text-sm sm:text-base sm:py-2 sm:px-4 rounded inline-flex items-center"
+                                        title="Generate action items for your decision"
+                                    >
+                                        <i class="fas fa-tasks mr-1"></i> Next steps
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- OBEJECTIONS_UI_START -->
+                        <div x-show="message.role==='assistant' && message.type==='objections'" class="max-w-3xl mx-auto p-4">
+                          <h2 class="text-lg font-medium mb-2">Ways to handle objections</h2>
+                          <template x-for="(obj,oIndex) in message.content.objections" :key="oIndex">
+                            <div class="mb-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                              <p class="font-semibold" x-text="obj.objection"></p>
+                              <ul class="list-disc list-inside mt-2 space-y-1">
+                                <template x-for="(ms,mIndex) in obj.mitigation_strategies" :key="mIndex">
+                                  <li x-text="ms"></li>
+                                </template>
+                              </ul>
+                            </div>
+                          </template>
+                          <div class="mt-4">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">Suggested replies:</div>
+                            <div class="flex flex-wrap gap-2">
+                              <template x-for="(s,sIndex) in message.content.suggested_messages" :key="sIndex">
+                                <button @click="userMessage=s;sendFollowUpMessage()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm px-3 py-2 rounded-full">
+                                  <span x-text="s"></span>
+                                </button>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- OBEJECTIONS_UI_END -->
+                        
+                        <!-- Next Steps UI as a special message type -->
+                        <div x-show="message.role === 'assistant' && message.type === 'next_steps'" class="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 animate__animated animate__fadeIn">
+                            <div class="mb-3">
+                                <h2 class="text-lg sm:text-xl font-medium text-gray-900 dark:text-white" x-text="message.content?.title || 'Next Steps'"></h2>
+                            </div>
+                            
+                            <!-- Next steps list -->
+                            <div class="space-y-2 mb-4">
+                                <template x-for="(step, stepIndex) in message.content?.steps || []" :key="stepIndex">
+                                    <div class="flex items-start justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-300" x-text="step.text"></div>
+                                        <button 
+                                            @click="message.content.steps.splice(stepIndex, 1)" 
+                                            class="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 ml-2"
+                                            title="Remove"
+                                        >
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Action buttons - only shown for the last next steps message -->
+                            <div class="flex flex-wrap gap-2" x-show="index === (messages.findLastIndex(msg => msg.role === 'assistant' && msg.type === 'next_steps'))">
+                                <button 
+                                    @click="suggestAdditionalAction(message)"
+                                    class="bg-sky-600 hover:bg-sky-700 text-white font-medium py-1.5 px-3 text-sm sm:text-base sm:py-2 sm:px-4 rounded"
+                                >
+                                    <i class="fas fa-plus-circle mr-1"></i> Suggest Action
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Loading indicator -->
+                <div x-show="isLoading" class="flex justify-center my-4">
+                    <div class="animate-pulse flex space-x-2">
+                        <div class="h-2 w-2 bg-gray-400 rounded-full"></div>
+                        <div class="h-2 w-2 bg-gray-400 rounded-full"></div>
+                        <div class="h-2 w-2 bg-gray-400 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fixed bottom section with input -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 p-2 pb-safe sm:p-4 shadow-lg border-t border-gray-200 dark:border-gray-700">
+                <div class="max-w-3xl mx-auto">
+                    <!-- Generate Options Button -->
+                    <div class="flex flex-col items-center mb-4">
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-2 text-center">Not sure what to do?👇🏼</p>
+                        <button 
+                            @click="generateChoices()" 
+                            :disabled="isLoading"
+                            class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-6 rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base shadow-md"
+                        >
+                            <i class="fas fa-list-ul mr-1"></i> Generate Options
+                        </button>
+                    </div>
+                    
+                    <!-- Message Input Container -->
+                    <style>
+                        /* Combined message input styles */
+                        .message-input-container {
+                            position: relative;
+                        }
+                        
+                        .send-button {
+                            position: absolute;
+                            right: 8px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            padding: 8px; /* Adjust padding for icon size */
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        
+                        #message-input {
+                            padding-right: 48px; /* Consistent padding for the button */
+                        }
+                    </style>
+                    <div class="message-input-container">
+                        <input
+                            id="message-input"
+                            x-model="userMessage"
+                            class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 sm:p-4 rounded-full border border-gray-300 dark:border-gray-600 focus:border-sky-500 outline-none text-sm sm:text-base"
+                            placeholder="Type your message"
+                            @keydown.enter.prevent="sendFollowUpMessage"
+                            @focus="setTimeout(() => { window.scrollTo({ top: window.scrollY + 100, behavior: 'smooth' }); }, 300)"
+                        />
+                        <!-- Unified Send Button -->
+                        <button
+                            @click="sendFollowUpMessage"
+                            :disabled="!userMessage.trim() || isLoading"
+                            class="send-button bg-sky-500 hover:bg-sky-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-500"
+                        >
+                            <svg x-show="!isLoading" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            <svg x-show="isLoading" class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Video Modal -->
+    <div 
+        x-show="showVideoModal" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+        @click.self="showVideoModal = false"
+    >
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">How it works</h2>
+                <button @click="showVideoModal = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="relative overflow-hidden" style="padding-top: 56.25%">
+                <video 
+                    class="absolute inset-0 w-full h-full" 
+                    controls 
+                    autoplay
+                    x-init="$el.addEventListener('loadeddata', () => { $el.play(); })"
+                >
+                    <source src="https://github.com/exiao/user-studies/raw/main/say-less.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div 
+        x-show="showToast" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform translate-y-2"
+        x-transition:enter-end="opacity-100 transform translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform translate-y-0"
+        x-transition:leave-end="opacity-0 transform translate-y-2"
+        class="fixed bottom-20 inset-x-0 pb-safe z-50 flex justify-center"
+    >
+        <div 
+            class="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-center max-w-sm mx-4 flex items-center justify-between shadow-lg cursor-pointer"
+            :class="{'border-sky-500 dark:border-sky-400': showUndoButton}"
+            @click="showUndoButton ? undoLastAction() : (showToast = false, _toastTimeout && clearTimeout(_toastTimeout) && (_toastTimeout = null))"
+        >
+            <div class="flex items-center">
+                <template x-if="toastIcon === 'error'">
+                    <span class="mr-2 text-red-500">🥺</span>
+                </template>
+                <template x-if="toastIcon === 'info'">
+                    <i 
+                        class="fas fa-info-circle mr-2 text-sky-600 dark:text-sky-400"
+                        :class="{'fa-undo': showUndoButton}"
+                    ></i>
+                </template>
+                <span x-text="toastMessage"></span>
+            </div>
+            <button 
+                x-show="showUndoButton"
+                @click.stop="undoLastAction()"
+                class="ml-3 text-sky-600 dark:text-sky-400 font-medium text-sm hover:text-sky-800 dark:hover:text-sky-300 bg-sky-100 dark:bg-sky-900/30 px-3 py-1 rounded-full"
+            >
+                Undo
+            </button>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div 
+        x-show="showHistoryModal" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        @click.self="showHistoryModal = false"
+    >
+        <div 
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] flex flex-col"
+            @click.away="showHistoryModal = false"
+        >
+            <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Decision History</h2>
+                <div class="flex items-center">
+                    <!-- Action filter removed -->
+                    <button @click="showHistoryModal = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 p-4">
+                <template x-if="conversationHistory.length === 0">
+                    <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+                        <p>No previous decisions found</p>
+                    </div>
+                </template>
+                
+                <template x-for="(history, index) in conversationHistory" :key="index">
+                    <div 
+                        @click="loadConversation(history.id)"
+                        class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-medium text-gray-900 dark:text-white">
+                                    <span x-text="history.title || 'Untitled Decision'"></span>
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" x-text="formatDate(history.timestamp)"></p>
+                            </div>
+                            <button 
+                                @click.stop="deleteConversation(history.id)" 
+                                class="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                                title="Delete"
+                            >
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 text-sm mt-2 line-clamp-2" x-text="history.situation"></p>
+                        <!-- Task association removed -->
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

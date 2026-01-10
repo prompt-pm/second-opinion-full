@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle -->
+    <circle cx="200" cy="150" r="120" fill="#EBF5FF" />
+    
+    <!-- Bible Book -->
+    <path d="M140 90h120v160h-120c-11 0-20-9-20-20v-120c0-11 9-20 20-20z" fill="#3B82F6"/>
+    <path d="M260 90h-120v160h120v-160z" fill="#60A5FA"/>
+    
+    <!-- Pages -->
+    <path d="M250 100c0-5.5-4.5-10-10-10h-100v140h100c5.5 0 10-4.5 10-10v-120z" fill="white"/>
+    
+    <!-- Cross -->
+    <path d="M180 120h20v60h30v20h-30v30h-20v-30h-30v-20h30v-60z" fill="#93C5FD"/>
+    
+    <!-- Bookmark Ribbon -->
+    <path d="M170 90v40l15-15 15 15v-40h-30z" fill="#EF4444"/>
+</svg> 

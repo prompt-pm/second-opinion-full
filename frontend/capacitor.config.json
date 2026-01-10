@@ -1,0 +1,27 @@
+{
+  "appId": "com.bible.genius",
+  "appName": "Bible Genius",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "PurchasesPlugin": {
+      "apiKey": {
+        "android": "goog_iAMZTjuqpJNDPznmrJLCQKBsUKp",
+        "ios": "appl_vxDzATFBkVKsVdSrBaMzpmMSYpK"
+      }
+    },
+    "CapacitorUpdater": {
+      "appReadyTimeout": 5000,
+      "responseTimeout": 10,
+      "version": "1.1.0",
+      "autoUpdate": true,
+      "directUpdate": false,
+      "appId": "com.bible.genius",
+      "updateUrl": "https://prompt-pm--bloom-updater-fastapi-app.modal.run/check_update",
+      "statsUrl": "https://prompt-pm--bloom-updater-fastapi-app.modal.run/log_update"
+    }
+  }
+}

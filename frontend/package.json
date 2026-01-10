@@ -1,0 +1,39 @@
+{
+  "name": "say-less",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync": "npx cap sync",
+    "postbuild": "npx cap sync"
+  },
+  "keywords": ["decision", "ai", "choices"],
+  "author": "",
+  "license": "ISC",
+  "description": "Make decisions with confidence",
+  "dependencies": {
+    "@capacitor-community/in-app-review": "^6.0.0",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capgo/capacitor-updater": "^6.3.8",
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@revenuecat/purchases-capacitor": "^9.0.9",
+    "alpinejs": "^3.14.7",
+    "animate.css": "^4.1.1",
+    "htmx.org": "^1.9.12",
+    "marked": "^15.0.4",
+    "tailwindcss": "^3.4.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "serve": "^14.2.4",
+    "vite": "^6.0.5"
+  }
+}
