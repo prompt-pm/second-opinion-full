@@ -1,45 +1,32 @@
-# Values App Contributor Guide
+# Second Opinion - Starter Repo
 
-## Primary Purpose
-- Help overthinkers make choices
-- Users provide a prompt which can include attachments, text, or voice (coming soon)
-- The AI provides useful feedback and chooses which module is most appropriate to help the user with their decision making
-- Users can share their decision chat with others with the share button 
+A simple decision-making assistant that helps users think through choices.
 
-## Codebase Layout
-- `backend.py` – FastAPI application with Modal integration for deployment
-- `ai_functions.py` – Helper functions calling Groq, Cerebras, and other LLM APIs
-- `ai_agents.py` – Orchestrates multiple LLM agents for conversation and decision help
-- `models.py` – Pydantic models for messages, choices, and other outputs
-- `database.py` – SQLAlchemy setup with a simple `DecisionRecord` model
-- `prompts.py` – Prompt templates used by the agents
-- `frontend/` – Alpine.js & Tailwind CSS app served by Vite
-- `scripts/` – Utility scripts such as `generate_sitemap.py`
-- `assets/` – Stores persistent data like the SQLite DB
-- `documents/` – Product specs and other docs
+## Features
+- **Chat**: Conversational AI that asks clarifying questions
+- **Priorities**: Extracts and lets users rank what matters most
+- **Choices**: Generates options with best/worst case scenarios
 
-## Key Features
-- Multiple FastAPI endpoints for chat, outcome generation, next steps, and more
-- Agents combine conversation, priorities gathering, recommendations, and objections handling
-- Supports web search and LLM providers (Groq, Cerebras) via helper functions
-- Conversation history stored in a SQLite database mounted locally or via Modal volume
-- Minimalist front end built with HTMX/Alpine.js and styled with Tailwind CSS
+## Setup
 
-## Development Tips
-- Run the API locally with `make dev` (uvicorn reload on port 7000)
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## Linting & Formatting
-- Check code style and formatting: `make lint`
-- Auto-format code with Black: `make lint-fix`
+2. Set your OpenRouter API key:
+```bash
+export OPENROUTER_API_KEY=your_key_here
+```
 
-## Testing
-- Run the full test suite: `pytest -q`
+3. Run the server:
+```bash
+python backend.py
+```
 
-## Pull Request Instructions
-- Use branch names that reflect your feature or fix.
-- PR title format: `[oksayless] <Brief description>`
-- Before submitting, ensure:
-  - All tests pass: `pytest -q`
-  - Code is formatted: `make lint`. Fix issues by running `make lint-fix`
-  - New or updated tests are included for your changes.
-  - No lint or security warnings remain. 
+4. Open http://localhost:7000
+
+## Files
+- `backend.py` - FastAPI server with 3 endpoints (/api/chat, /api/priorities, /api/choices)
+- `index.html` - Single-page frontend with Alpine.js
+- `requirements.txt` - Python dependencies

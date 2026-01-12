@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Opinion</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .glass-chip {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .glass-chip:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        textarea::placeholder, input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .drag-over {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+        }
+    </style>
+</head>
+<body class="text-white">
+<div class="min-h-screen flex items-center justify-center p-4" x-data="app">
+
+    <!-- Landing View -->
+    <div x-show="view === 'landing'" class="w-full max-w-3xl">
+        <div class="glass rounded-3xl p-8 md:p-10">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">get a second opinion</h1>
+
+            <div class="flex flex-wrap gap-4 mb-6 text-sm md:text-base text-gray-300">
+                <span>🤔 figure out what you want</span>
+                <span>⚡ decide faster</span>
+                <span>✅ take action</span>
+            </div>
+
+            <div class="relative mb-6">
+                <textarea
+                    x-model="input"
+                    @keydown.enter.meta="submitInitial"
+                    @keydown.enter.ctrl="submitInitial"
+                    class="glass-input w-full rounded-2xl p-4 pr-16 text-white resize-none focus:outline-none focus:border-blue-400/50 min-h-[120px]"
+                    placeholder="what's your situation?"
+                    rows="4"
+                ></textarea>
+                <button
+                    @click="submitInitial"
+                    :disabled="!input.trim() || loading"
+                    class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <template x-for="ex in examples" :key="ex.text">
+                    <button @click="useExample(ex.text)" class="glass-chip rounded-xl px-4 py-3 text-sm text-gray-300 flex items-center justify-center gap-2">
+                        <span x-text="ex.emoji"></span><span x-text="ex.label"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat View -->
+    <div x-show="view === 'chat'" class="w-full max-w-2xl">
+        <div class="glass rounded-3xl p-6 md:p-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">Second Opinion</h2>
+                <button @click="reset" class="text-gray-400 hover:text-white text-sm">New Chat</button>
+            </div>
+
+            <!-- Messages -->
+            <div class="space-y-4 mb-6 max-h-[40vh] overflow-y-auto">
+                <template x-for="(msg, i) in messages" :key="i">
+                    <div :class="msg.role === 'user' ? 'ml-8' : 'mr-8'">
+                        <div :class="msg.role === 'user' ? 'glass-card' : 'bg-transparent'" class="rounded-2xl p-4">
+                            <p class="text-sm text-gray-300" x-text="msg.content"></p>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="loading" class="text-gray-400 text-sm">Thinking...</div>
+            </div>
+
+            <!-- Priorities UI -->
+            <div x-show="priorities.length > 0 && !prioritiesSubmitted" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-3">Rank your priorities <span class="text-gray-400 text-sm">(drag to reorder)</span></h3>
+                <ul class="space-y-2 mb-4">
+                    <template x-for="(p, i) in priorities" :key="i">
+                        <li draggable="true"
+                            @dragstart="dragStart(i)"
+                            @dragover.prevent="dragOver($event, i)"
+                            @dragleave="dragLeave($event)"
+                            @drop="drop($event, i)"
+                            class="glass-chip rounded-xl p-3 cursor-move flex items-center text-sm group">
+                            <span class="mr-3 text-gray-500">≡</span>
+                            <input
+                                type="text"
+                                x-model="priorities[i]"
+                                class="flex-1 bg-transparent outline-none text-gray-200"
+                                @click.stop
+                            >
+                            <button @click.stop="priorities.splice(i, 1)" class="ml-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                ✕
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+                <div class="flex gap-2 mb-4">
+                    <input
+                        type="text"
+                        x-model="newPriority"
+                        @keydown.enter="addPriority"
+                        placeholder="Add a priority..."
+                        class="glass-input flex-1 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
+                    >
+                    <button @click="addPriority" :disabled="!newPriority.trim()" class="bg-blue-500 hover:bg-blue-600 disabled:opacity-30 text-white px-4 py-2 rounded-xl text-sm transition-all">
+                        Add
+                    </button>
+                </div>
+                <button @click="submitPriorities" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl text-sm transition-all">
+                    Confirm Ranking
+                </button>
+            </div>
+
+            <!-- Input -->
+            <div class="relative mb-4">
+                <input
+                    x-model="input"
+                    @keydown.enter="sendMessage"
+                    class="glass-input w-full rounded-xl p-4 pr-14 text-white focus:outline-none focus:border-blue-400/50"
+                    placeholder="Type your message..."
+                >
+                <button
+                    @click="sendMessage"
+                    :disabled="!input.trim() || loading"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 text-white p-2 rounded-lg transition-all"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 flex-wrap">
+                <button @click="getPriorities" :disabled="loading || messages.length === 0"
+                    class="glass-chip rounded-xl px-4 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                    📋 Rank Priorities
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('app', () => ({
+        view: 'landing',
+        messages: [],
+        input: '',
+        loading: false,
+        priorities: [],
+        prioritiesSubmitted: false,
+        choices: [],
+        choicesTitle: '',
+        uncertainties: [],
+        dragIndex: null,
+        examples: [],
+        newPriority: '',
+
+        allExamples: [
+            { emoji: '💼', label: 'Should I take this job?', text: 'Should I take this job offer?' },
+            { emoji: '💼', label: 'Should I ask for a raise?', text: 'Should I ask my boss for a raise?' },
+            { emoji: '💼', label: 'Should I quit my job?', text: 'Should I quit my current job?' },
+            { emoji: '💼', label: 'Should I switch careers?', text: 'Should I switch to a different career?' },
+            { emoji: '🏠', label: 'Should I move?', text: 'Should I move to a new city?' },
+            { emoji: '🏠', label: 'Should I buy or rent?', text: 'Should I buy a place or keep renting?' },
+            { emoji: '🏠', label: 'Should I get a roommate?', text: 'Should I get a roommate to save money?' },
+            { emoji: '❤️', label: 'Should I text them back?', text: 'Should I text them back?' },
+            { emoji: '❤️', label: 'Should I go on another date?', text: 'Should I go on another date with them?' },
+            { emoji: '❤️', label: 'Should I end this?', text: 'Should I end this relationship?' },
+            { emoji: '❤️', label: 'Should I say I love you?', text: 'Should I tell them I love them?' },
+            { emoji: '✈️', label: 'Where should I travel?', text: 'Where should I go on my next trip?' },
+            { emoji: '✈️', label: 'Should I book the trip?', text: 'Should I book this trip?' },
+            { emoji: '🎓', label: 'Should I go back to school?', text: 'Should I go back to school?' },
+            { emoji: '💰', label: 'Should I buy this?', text: 'Should I make this big purchase?' },
+            { emoji: '🎯', label: 'Should I start this project?', text: 'Should I start this side project?' },
+        ],
+
+        init() {
+            this.examples = this.allExamples
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 4);
+        },
+
+        useExample(text) {
+            this.input = text;
+        },
+
+        async submitInitial() {
+            if (!this.input.trim() || this.loading) return;
+            this.messages.push({ role: 'user', content: this.input });
+            this.view = 'chat';
+            const userInput = this.input;
+            this.input = '';
+            this.loading = true;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: this.messages })
+                });
+                const data = await res.json();
+                this.messages.push({ role: 'assistant', content: data.response });
+            } catch (e) {
+                this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
+            }
+            this.loading = false;
+        },
+
+        async sendMessage() {
+            if (!this.input.trim() || this.loading) return;
+            this.messages.push({ role: 'user', content: this.input });
+            this.input = '';
+            this.loading = true;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: this.messages })
+                });
+                const data = await res.json();
+                this.messages.push({ role: 'assistant', content: data.response });
+            } catch (e) {
+                this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
+            }
+            this.loading = false;
+        },
+
+        async getPriorities() {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/priorities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: this.messages })
+                });
+                const data = await res.json();
+                this.priorities = data.priorities;
+                this.prioritiesSubmitted = false;
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+            this.loading = false;
+        },
+
+        async submitPriorities() {
+            this.prioritiesSubmitted = true;
+            this.messages.push({
+                role: 'user',
+                content: 'My priorities (ranked): ' + this.priorities.join(', ')
+            });
+            this.loading = true;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: this.messages })
+                });
+                const data = await res.json();
+                this.messages.push({ role: 'assistant', content: data.response });
+            } catch (e) {
+                this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
+            }
+            this.loading = false;
+        },
+
+        addPriority() {
+            if (this.newPriority.trim()) {
+                this.priorities.push(this.newPriority.trim());
+                this.newPriority = '';
+            }
+        },
+
+        async getChoices() {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/choices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: this.messages,
+                        priorities: this.prioritiesSubmitted ? this.priorities : []
+                    })
+                });
+                const data = await res.json();
+                this.choices = data.choices;
+                this.choicesTitle = data.title;
+                this.uncertainties = data.uncertainties;
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+            this.loading = false;
+        },
+
+        reset() {
+            this.view = 'landing';
+            this.messages = [];
+            this.input = '';
+            this.priorities = [];
+            this.prioritiesSubmitted = false;
+            this.newPriority = '';
+            this.choices = [];
+            this.choicesTitle = '';
+            this.uncertainties = [];
+        },
+
+        dragStart(i) { this.dragIndex = i; },
+        dragOver(e, i) { e.target.closest('li')?.classList.add('drag-over'); },
+        dragLeave(e) { e.target.closest('li')?.classList.remove('drag-over'); },
+        drop(e, i) {
+            e.target.closest('li')?.classList.remove('drag-over');
+            const item = this.priorities.splice(this.dragIndex, 1)[0];
+            this.priorities.splice(i, 0, item);
+            this.dragIndex = null;
+        }
+    }));
+});
+</script>
+</body>
+</html>
