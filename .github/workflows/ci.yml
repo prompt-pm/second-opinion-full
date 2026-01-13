@@ -30,6 +30,7 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
         env:
+          PYTHONPATH: ${{ github.workspace }}
           OPENROUTER_API_KEY: test-key-for-ci
 
   frontend:
