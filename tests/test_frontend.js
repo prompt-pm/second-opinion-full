@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createAppData } from './app.js';
+import { createAppData } from '../frontend/app.js';
 
 describe('createAppData', () => {
     let app;

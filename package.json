@@ -5,10 +5,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "lint": "eslint . --config config/eslint.config.js",
+    "lint:fix": "eslint . --fix --config config/eslint.config.js",
+    "test": "vitest run --config config/vitest.config.js",
+    "test:watch": "vitest --config config/vitest.config.js"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.0.0",

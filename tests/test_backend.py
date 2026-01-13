@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from backend import (
+from backend.main import app
+from backend.models import (
     Choice,
     ChoicesResponse,
     Message,
     PrioritiesResponse,
-    app,
 )
 
 
@@ -45,7 +45,7 @@ class TestChatEndpoint:
 
     def test_chat_with_valid_message(self, client, mock_openai_response):
         """POST /api/chat should return an assistant response."""
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_openai_response
 
             response = client.post(
@@ -60,7 +60,7 @@ class TestChatEndpoint:
 
     def test_chat_with_multiple_messages(self, client, mock_openai_response):
         """POST /api/chat should handle multiple messages in conversation."""
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_openai_response
 
             messages = [
@@ -78,7 +78,7 @@ class TestChatEndpoint:
 
     def test_chat_with_empty_messages(self, client, mock_openai_response):
         """POST /api/chat should handle empty messages list."""
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_openai_response
 
             response = client.post("/api/chat", json={"messages": []})
@@ -108,7 +108,7 @@ class TestPrioritiesEndpoint:
             priorities=["Career growth", "Work-life balance", "Salary"]
         )
 
-        with patch("backend.instructor") as mock_instructor:
+        with patch("backend.main.instructor") as mock_instructor:
             mock_structured_client = MagicMock()
             mock_instructor.from_openai.return_value = mock_structured_client
             mock_structured_client.chat.completions.create.return_value = mock_priorities
@@ -134,7 +134,7 @@ class TestPrioritiesEndpoint:
         """POST /api/priorities should handle empty conversation."""
         mock_priorities = PrioritiesResponse(priorities=[])
 
-        with patch("backend.instructor") as mock_instructor:
+        with patch("backend.main.instructor") as mock_instructor:
             mock_structured_client = MagicMock()
             mock_instructor.from_openai.return_value = mock_structured_client
             mock_structured_client.chat.completions.create.return_value = mock_priorities
@@ -178,7 +178,7 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_response
 
             response = client.post(
@@ -212,7 +212,7 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_response
 
             response = client.post(
@@ -234,7 +234,7 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.client") as mock_client:
+        with patch("backend.main.client") as mock_client:
             mock_client.chat.completions.create.return_value = mock_response
 
             priorities = ["Stability", "Growth", "Compensation"]

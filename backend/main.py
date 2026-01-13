@@ -16,7 +16,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from openai import OpenAI
-from pydantic import BaseModel, Field
+
+from backend.models import (
+    ChatRequest,
+    ChoicesRequest,
+    PrioritiesRequest,
+    PrioritiesResponse,
+)
+from backend.prompts import CHOICES_PROMPT, PRIORITIES_PROMPT, SYSTEM_PROMPT
 
 app = FastAPI()
 
@@ -40,64 +47,10 @@ client = OpenAI(
 )
 MODEL = "google/gemini-2.0-flash-001"
 
-# --- Prompts ---
-SYSTEM_PROMPT = """You are a decision-making assistant that helps people think through choices.
-Analyze trade-offs, consider uncertainties, and help users see different perspectives.
-Be warm but concise. Ask clarifying questions when needed. Use 1-2 sentences max."""
 
-PRIORITIES_PROMPT = """Based on this conversation, identify 3-5 priorities or objectives
-that matter most to this person's decision. Return them as a simple list."""
-
-CHOICES_PROMPT = """Based on this conversation and the user's priorities, generate 3 possible
-choices for the user's decision.
-
-For EACH choice, you must provide:
-- name: A short name for the option (2-5 words)
-- best_case: The best case scenario if they choose this (under 10 words)
-- worst_case: The worst case scenario if they choose this (under 10 words)
-
-Also provide 1-2 key uncertainties as questions."""
-
-
-# --- Models ---
-class Message(BaseModel):
-    role: str
-    content: str
-
-
-class ChatRequest(BaseModel):
-    messages: list[Message]
-
-
-class PrioritiesRequest(BaseModel):
-    messages: list[Message]
-
-
-class ChoicesRequest(BaseModel):
-    messages: list[Message]
-    priorities: list[str] = []
-
-
-class PrioritiesResponse(BaseModel):
-    priorities: list[str] = Field(description="3-5 key priorities for this decision")
-
-
-class Choice(BaseModel):
-    name: str = Field(description="Short name for this option, e.g. 'Take the job' or 'Stay put'")
-    best_case: str = Field(description="Best case scenario, e.g. 'Career takes off, double salary'")
-    worst_case: str = Field(description="Worst case scenario, e.g. 'Hate the new role, regret leaving'")
-
-
-class ChoicesResponse(BaseModel):
-    title: str = Field(description="A question summarizing the decision")
-    choices: list[Choice]
-    uncertainties: list[str] = Field(description="1-2 key uncertainties as questions")
-
-
-# --- Endpoints ---
 @app.get("/")
 def serve_index():
-    return FileResponse("index.html")
+    return FileResponse("frontend/index.html")
 
 
 @app.post("/api/chat")

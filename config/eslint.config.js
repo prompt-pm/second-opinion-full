@@ -45,7 +45,7 @@ export default [
     },
   },
   {
-    files: ["**/*.test.js", "**/*.spec.js"],
+    files: ["**/*.test.js", "**/*.spec.js", "tests/**/*.js"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -55,6 +55,7 @@ export default [
         beforeEach: "readonly",
         afterEach: "readonly",
         vi: "readonly",
+        global: "readonly",
       },
     },
     rules: {
@@ -62,6 +63,6 @@ export default [
     },
   },
   {
-    ignores: ["node_modules/**", ".context/**", ".venv/**", "eslint.config.js", "vitest.config.js"],
+    ignores: ["node_modules/**", ".context/**", ".venv/**", "backend/**", "config/**"],
   },
 ];
