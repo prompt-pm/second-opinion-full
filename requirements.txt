@@ -3,3 +3,9 @@ uvicorn
 openai
 instructor
 python-dotenv
+
+# Development dependencies
+pytest>=8.0.0
+pytest-cov>=4.0.0
+httpx>=0.27.0
+ruff>=0.4.0

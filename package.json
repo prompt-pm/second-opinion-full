@@ -1,0 +1,21 @@
+{
+  "name": "second-opinion",
+  "version": "1.0.0",
+  "description": "A decision-making assistant frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.0.0",
+    "@testing-library/jest-dom": "^6.4.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "happy-dom": "^14.0.0",
+    "vitest": "^2.0.0"
+  }
+}

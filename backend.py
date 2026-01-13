@@ -4,16 +4,18 @@ Simplified starter for teaching purposes
 """
 
 import os
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
+
+import instructor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
-from typing import List
 from openai import OpenAI
-import instructor
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 app.add_middleware(
@@ -56,20 +58,20 @@ class Message(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: List[Message]
+    messages: list[Message]
 
 
 class PrioritiesRequest(BaseModel):
-    messages: List[Message]
+    messages: list[Message]
 
 
 class ChoicesRequest(BaseModel):
-    messages: List[Message]
-    priorities: List[str] = []
+    messages: list[Message]
+    priorities: list[str] = []
 
 
 class PrioritiesResponse(BaseModel):
-    priorities: List[str] = Field(description="3-5 key priorities for this decision")
+    priorities: list[str] = Field(description="3-5 key priorities for this decision")
 
 
 class Choice(BaseModel):
@@ -80,8 +82,8 @@ class Choice(BaseModel):
 
 class ChoicesResponse(BaseModel):
     title: str = Field(description="A question summarizing the decision")
-    choices: List[Choice]
-    uncertainties: List[str] = Field(description="1-2 key uncertainties as questions")
+    choices: list[Choice]
+    uncertainties: list[str] = Field(description="1-2 key uncertainties as questions")
 
 
 # --- Endpoints ---
@@ -121,7 +123,7 @@ def generate_choices(request: ChoicesRequest):
     # Include priorities in the prompt if provided
     prompt = CHOICES_PROMPT
     if request.priorities:
-        prompt += f"\n\nUser's ranked priorities (most important first):\n"
+        prompt += "\n\nUser's ranked priorities (most important first):\n"
         for i, p in enumerate(request.priorities, 1):
             prompt += f"{i}. {p}\n"
 
