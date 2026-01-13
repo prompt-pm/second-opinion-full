@@ -29,6 +29,8 @@ jobs:
 
       - name: Run tests
         run: pytest test_backend.py -v
+        env:
+          OPENROUTER_API_KEY: test-key-for-ci
 
   frontend:
     name: Frontend Tests & Lint
