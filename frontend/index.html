@@ -47,6 +47,33 @@
             background: rgba(59, 130, 246, 0.2) !important;
             border-color: rgba(59, 130, 246, 0.5) !important;
         }
+        .thought-bubble {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            display: inline-block;
+            position: relative;
+        }
+        .spiral-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        .spiral-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .spiral-connector {
+            width: 2px;
+            height: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 <body class="text-white">
@@ -55,40 +82,70 @@
     <!-- Landing View -->
     <div x-show="view === 'landing'" class="w-full max-w-3xl">
         <div class="glass rounded-3xl p-8 md:p-10">
-            <h1 class="text-3xl md:text-4xl font-bold mb-4">get a second opinion</h1>
+            <!-- Hero -->
+            <h1 class="text-3xl md:text-4xl font-bold text-center mb-2">Still thinking about it?</h1>
+            <p class="text-gray-400 text-center mb-8">(It's been 3 weeks.)</p>
 
-            <div class="flex flex-wrap gap-4 mb-6 text-sm md:text-base text-gray-300">
+            <!-- Anxiety Spiral -->
+            <div class="spiral-container">
+                <div class="spiral-row">
+                    <div class="thought-bubble text-sm">Should I take this job? 😟</div>
+                </div>
+                <div class="spiral-connector"></div>
+                <div class="spiral-row">
+                    <div class="thought-bubble text-sm ml-8">But what if I hate it? 😰</div>
+                </div>
+                <div class="spiral-connector"></div>
+                <div class="spiral-row">
+                    <div class="thought-bubble text-sm ml-16">What if I'm making a huge mistake? 😨</div>
+                </div>
+                <div class="spiral-connector"></div>
+                <div class="spiral-row">
+                    <div class="thought-bubble text-sm ml-24">What if I regret this forever? 😱</div>
+                </div>
+                <div class="spiral-connector"></div>
+                <div class="spiral-row">
+                    <div class="thought-bubble text-sm ml-32">3 AM, still awake, still thinking... 🌙💭</div>
+                </div>
+            </div>
+
+            <!-- Relatable Copy -->
+            <div class="text-gray-300 text-sm md:text-base space-y-1 my-8">
+                <p>You've made a pro/con list. Then another one.</p>
+                <p>You've asked 8 friends. Got 9 different opinions.</p>
+                <p>You've asked ChatGPT 47 times. Still no answer.</p>
+            </div>
+
+            <!-- CTA Box -->
+            <div class="glass-card rounded-2xl p-6 mb-8">
+                <p class="font-semibold mb-1">Stop the spiral.</p>
+                <p class="text-gray-400 text-sm mb-4">Get clarity in 20 minutes.</p>
+                <div class="relative">
+                    <textarea
+                        x-model="input"
+                        @keydown.enter.meta="submitInitial"
+                        @keydown.enter.ctrl="submitInitial"
+                        class="glass-input w-full rounded-2xl p-4 pr-16 text-white resize-none focus:outline-none focus:border-blue-400/50 min-h-[100px]"
+                        placeholder="what's your situation?"
+                        rows="3"
+                    ></textarea>
+                    <button
+                        @click="submitInitial"
+                        :disabled="!input.trim() || loading"
+                        class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Value Props -->
+            <div class="flex flex-wrap justify-center gap-4 text-sm md:text-base text-gray-300">
                 <span>🤔 figure out what you want</span>
                 <span>⚡ decide faster</span>
                 <span>✅ take action</span>
-            </div>
-
-            <div class="relative mb-6">
-                <textarea
-                    x-model="input"
-                    @keydown.enter.meta="submitInitial"
-                    @keydown.enter.ctrl="submitInitial"
-                    class="glass-input w-full rounded-2xl p-4 pr-16 text-white resize-none focus:outline-none focus:border-blue-400/50 min-h-[120px]"
-                    placeholder="what's your situation?"
-                    rows="4"
-                ></textarea>
-                <button
-                    @click="submitInitial"
-                    :disabled="!input.trim() || loading"
-                    class="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <template x-for="ex in examples" :key="ex.text">
-                    <button @click="useExample(ex.text)" class="glass-chip rounded-xl px-4 py-3 text-sm text-gray-300 flex items-center justify-center gap-2">
-                        <span x-text="ex.emoji"></span><span x-text="ex.label"></span>
-                    </button>
-                </template>
             </div>
         </div>
     </div>
