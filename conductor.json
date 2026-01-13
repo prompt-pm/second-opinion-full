@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "setup": "pip install -r requirements.txt; ln -sf \"$CONDUCTOR_ROOT_PATH/.env\" .env",
+        "setup": "uv venv && uv pip install -r requirements.txt; ln -sf \"$CONDUCTOR_ROOT_PATH/.env\" .env",
         "run": "uvicorn backend:app --host 0.0.0.0 --port $CONDUCTOR_PORT"
     },
     "runScriptMode": "nonconcurrent"
