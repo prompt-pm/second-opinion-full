@@ -89,6 +89,7 @@ describe('createAppData', () => {
 
         it('should add user message and switch to chat view', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'Assistant response' }),
             });
 
@@ -101,6 +102,7 @@ describe('createAppData', () => {
 
         it('should clear input after submission', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'Response' }),
             });
 
@@ -112,6 +114,7 @@ describe('createAppData', () => {
 
         it('should add assistant response to messages', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'This is the assistant response' }),
             });
 
@@ -154,6 +157,7 @@ describe('createAppData', () => {
 
         it('should add user message and fetch response', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'Response text' }),
             });
 
@@ -166,6 +170,7 @@ describe('createAppData', () => {
 
         it('should call /api/chat with correct payload', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'Response' }),
             });
 
@@ -189,6 +194,7 @@ describe('createAppData', () => {
     describe('getPriorities()', () => {
         it('should fetch priorities from API', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ priorities: ['Growth', 'Stability', 'Salary'] }),
             });
 
@@ -201,6 +207,7 @@ describe('createAppData', () => {
 
         it('should call /api/priorities endpoint', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ priorities: [] }),
             });
 
@@ -254,6 +261,7 @@ describe('createAppData', () => {
     describe('submitPriorities()', () => {
         it('should set prioritiesSubmitted to true', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'OK' }),
             });
 
@@ -265,6 +273,7 @@ describe('createAppData', () => {
 
         it('should add priorities message to conversation', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ response: 'Response' }),
             });
 
@@ -284,6 +293,7 @@ describe('createAppData', () => {
             };
 
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve(mockChoices),
             });
 
@@ -297,6 +307,7 @@ describe('createAppData', () => {
 
         it('should include priorities if submitted', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ choices: [], title: '', uncertainties: [] }),
             });
 
@@ -313,6 +324,7 @@ describe('createAppData', () => {
 
         it('should not include priorities if not submitted', async () => {
             global.fetch = vi.fn().mockResolvedValue({
+                ok: true,
                 json: () => Promise.resolve({ choices: [], title: '', uncertainties: [] }),
             });
 

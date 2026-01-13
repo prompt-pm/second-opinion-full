@@ -3,6 +3,7 @@ Second Opinion - A decision-making assistant
 Simplified starter for teaching purposes
 """
 
+import json
 import os
 
 from dotenv import load_dotenv
@@ -11,24 +12,31 @@ load_dotenv()
 
 
 import instructor
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
 app = FastAPI()
+
+# CORS configuration - use environment variable for production
+ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 # OpenRouter client - set OPENROUTER_API_KEY in your environment
+api_key = os.environ.get("OPENROUTER_API_KEY")
+if not api_key:
+    raise ValueError("OPENROUTER_API_KEY environment variable is required")
+
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.environ.get("OPENROUTER_API_KEY"),
+    api_key=api_key,
 )
 MODEL = "google/gemini-2.0-flash-001"
 
@@ -118,8 +126,6 @@ def extract_priorities(request: PrioritiesRequest):
 @app.post("/api/choices")
 def generate_choices(request: ChoicesRequest):
     """Generate structured decision options from conversation and priorities."""
-    import json
-
     # Include priorities in the prompt if provided
     prompt = CHOICES_PROMPT
     if request.priorities:
@@ -149,8 +155,11 @@ Respond with valid JSON in exactly this format:
         response_format={"type": "json_object"},
     )
 
-    result = json.loads(response.choices[0].message.content)
-    return result
+    try:
+        result = json.loads(response.choices[0].message.content)
+        return result
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Invalid JSON from LLM: {e}") from e
 
 
 if __name__ == "__main__":

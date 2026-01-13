@@ -49,16 +49,19 @@ export function createAppData() {
 
         async submitInitial() {
             if (!this.input.trim() || this.loading) return;
+            this.loading = true;
             this.messages.push({ role: 'user', content: this.input });
             this.view = 'chat';
             this.input = '';
-            this.loading = true;
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages }),
                 });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
             } catch (e) {
@@ -69,15 +72,18 @@ export function createAppData() {
 
         async sendMessage() {
             if (!this.input.trim() || this.loading) return;
+            this.loading = true;
             this.messages.push({ role: 'user', content: this.input });
             this.input = '';
-            this.loading = true;
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages }),
                 });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
             } catch (e) {
@@ -94,28 +100,36 @@ export function createAppData() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages }),
                 });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
                 this.priorities = data.priorities;
                 this.prioritiesSubmitted = false;
             } catch (e) {
+                this.priorities = [];
                 throw new Error('Error: ' + e.message);
+            } finally {
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         async submitPriorities() {
             this.prioritiesSubmitted = true;
+            this.loading = true;
             this.messages.push({
                 role: 'user',
                 content: 'My priorities (ranked): ' + this.priorities.join(', '),
             });
-            this.loading = true;
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages }),
                 });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
             } catch (e) {
@@ -142,14 +156,19 @@ export function createAppData() {
                         priorities: this.prioritiesSubmitted ? this.priorities : [],
                     }),
                 });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
                 this.choices = data.choices;
                 this.choicesTitle = data.title;
                 this.uncertainties = data.uncertainties;
             } catch (e) {
+                this.choices = [];
                 throw new Error('Error: ' + e.message);
+            } finally {
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         reset() {
