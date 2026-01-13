@@ -1,0 +1,69 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+    #   - "src/**/*.js"
+    #   - "src/**/*.jsx"
+
+jobs:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        timeout-minutes: 60
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_sticky_comment: true
+          additional_permissions: |
+            actions: read
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }}.
+
+            Provide feedback focused on:
+            - Correctness: Will this code work as intended? Are there bugs or logic errors?
+            - Simplicity: Is the code straightforward and easy to understand? Flag unnecessary complexity.
+            - Security: Are there command injection, XSS, SQL injection, or other OWASP vulnerabilities?
+            - Reliability: Are there edge cases or failure modes that could cause issues in production?
+            - Performance: Are there N+1 queries, unnecessary loops, or expensive operations in hot paths?
+            - Test coverage: Does new functionality have appropriate tests?
+
+            ## Guidelines
+            - Avoid suggesting premature optimizations
+            - Do not flag linter, type, pedantic, and formatting issues
+            - Do NOT recommend adding abstractions, patterns, or "improvements" beyond what the PR is doing
+            - Do NOT suggest adding docstrings, comments, or type annotations to unchanged code
+            - Keep feedback practical and actionable - avoid esoteric or theoretical concerns
+            - Be concise
+
+            Be constructive and helpful. Focus on catching real problems, not polishing already-working code.
+
+            Use `gh pr comment ${{ github.event.pull_request.number }}` to post your review. Use full 40-char git SHA when linking to code (e.g., https://github.com/${{ github.repository }}/blob/FULL_SHA/path/file.py#L10-L15).
+
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://docs.anthropic.com/en/docs/claude-code/sdk#command-line for available options
+          claude_args: '--model claude-opus-4-5-20251101 --allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),WebSearch,WebFetch"'
+
