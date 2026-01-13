@@ -33,25 +33,37 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
+        timeout-minutes: 60
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_sticky_comment: true
+          additional_permissions: |
+            actions: read
           prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            Review pull request #${{ github.event.pull_request.number }}.
 
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            Provide feedback focused on:
+            - Correctness: Will this code work as intended? Are there bugs or logic errors?
+            - Simplicity: Is the code straightforward and easy to understand? Flag unnecessary complexity.
+            - Security: Are there command injection, XSS, SQL injection, or other OWASP vulnerabilities?
+            - Reliability: Are there edge cases or failure modes that could cause issues in production?
+            - Performance: Are there N+1 queries, unnecessary loops, or expensive operations in hot paths?
+            - Test coverage: Does new functionality have appropriate tests?
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            ## Guidelines
+            - Avoid suggesting premature optimizations
+            - Do not flag linter, type, pedantic, and formatting issues
+            - Do NOT recommend adding abstractions, patterns, or "improvements" beyond what the PR is doing
+            - Do NOT suggest adding docstrings, comments, or type annotations to unchanged code
+            - Keep feedback practical and actionable - avoid esoteric or theoretical concerns
+            - Be concise
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            Be constructive and helpful. Focus on catching real problems, not polishing already-working code.
+
+            Use `gh pr comment ${{ github.event.pull_request.number }}` to post your review. Use full 40-char git SHA when linking to code (e.g., https://github.com/${{ github.repository }}/blob/FULL_SHA/path/file.py#L10-L15).
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          # or https://docs.anthropic.com/en/docs/claude-code/sdk#command-line for available options
+          claude_args: '--model claude-opus-4-5-20251101 --allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),WebSearch,WebFetch"'
 
