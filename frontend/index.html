@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Second Opinion</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -162,18 +163,8 @@
             }
         }
 
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
         .animate-fade-in-up {
             animation: fadeInUp 0.53s ease-out forwards;
-            opacity: 0;
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.53s ease-out forwards;
             opacity: 0;
         }
 
@@ -270,6 +261,18 @@
             color: white;
         }
 
+        /* Typewriter cursor */
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .typing-cursor::after {
+            content: '▋';
+            animation: blink 0.8s ease-in-out infinite;
+            margin-left: 1px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
         /* Markdown rendering styles */
         .markdown-content strong {
             font-weight: 600;
@@ -337,6 +340,15 @@
         .markdown-content h1 { font-size: 1.25rem; }
         .markdown-content h2 { font-size: 1.125rem; }
         .markdown-content h3 { font-size: 1rem; }
+
+        /* Accessibility: respect user preference for reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
 
     </style>
 </head>
@@ -413,7 +425,12 @@
                              x-transition:enter-start="opacity-0 translate-y-2"
                              x-transition:enter-end="opacity-100 translate-y-0">
                             <div :class="msg.role === 'user' ? 'glass-card max-w-[80%]' : 'bg-transparent'" class="rounded-2xl p-4">
-                                <div class="text-sm text-gray-300 markdown-content" x-html="renderMarkdown(msg.content)"></div>
+                                <!-- Typing state: plain text with cursor -->
+                                <div x-show="msg.role === 'assistant' && isTyping(i)"
+                                     class="text-sm text-gray-300 typing-cursor" x-text="typingText"></div>
+                                <!-- Done typing: render markdown -->
+                                <div x-show="msg.role !== 'assistant' || !isTyping(i)"
+                                     class="text-sm text-gray-300 markdown-content" x-html="renderMarkdown(msg.content)"></div>
                             </div>
                         </div>
                     </template>
@@ -559,6 +576,10 @@ document.addEventListener('alpine:init', () => {
         newPriority: '',
         error: null,
 
+        // Typewriter state
+        typingIndex: -1,
+        typingText: '',
+
         // Anxiety spiral scenarios (randomized on load)
         currentSpiral: [],
         spiralScenarios: [
@@ -612,25 +633,6 @@ document.addEventListener('alpine:init', () => {
             ]
         ],
 
-        allExamples: [
-            { emoji: '💼', label: 'Should I take this job?', text: 'Should I take this job offer?' },
-            { emoji: '💼', label: 'Should I ask for a raise?', text: 'Should I ask my boss for a raise?' },
-            { emoji: '💼', label: 'Should I quit my job?', text: 'Should I quit my current job?' },
-            { emoji: '💼', label: 'Should I switch careers?', text: 'Should I switch to a different career?' },
-            { emoji: '🏠', label: 'Should I move?', text: 'Should I move to a new city?' },
-            { emoji: '🏠', label: 'Should I buy or rent?', text: 'Should I buy a place or keep renting?' },
-            { emoji: '🏠', label: 'Should I get a roommate?', text: 'Should I get a roommate to save money?' },
-            { emoji: '❤️', label: 'Should I text them back?', text: 'Should I text them back?' },
-            { emoji: '❤️', label: 'Should I go on another date?', text: 'Should I go on another date with them?' },
-            { emoji: '❤️', label: 'Should I end this?', text: 'Should I end this relationship?' },
-            { emoji: '❤️', label: 'Should I say I love you?', text: 'Should I tell them I love them?' },
-            { emoji: '✈️', label: 'Where should I travel?', text: 'Where should I go on my next trip?' },
-            { emoji: '✈️', label: 'Should I book the trip?', text: 'Should I book this trip?' },
-            { emoji: '🎓', label: 'Should I go back to school?', text: 'Should I go back to school?' },
-            { emoji: '💰', label: 'Should I buy this?', text: 'Should I make this big purchase?' },
-            { emoji: '🎯', label: 'Should I start this project?', text: 'Should I start this side project?' },
-        ],
-
         init() {
             // Pick a random anxiety spiral on load
             const randomIndex = Math.floor(Math.random() * this.spiralScenarios.length);
@@ -645,7 +647,36 @@ document.addEventListener('alpine:init', () => {
 
         renderMarkdown(content) {
             if (!content) return '';
-            return marked.parse(content);
+            return DOMPurify.sanitize(marked.parse(content));
+        },
+
+        async typeMessage(messageIndex) {
+            const fullText = this.messages[messageIndex].content;
+            const words = fullText.split(/(\s+)/); // Split but keep whitespace
+            this.typingIndex = messageIndex;
+            this.typingText = '';
+
+            for (let i = 0; i < words.length; i++) {
+                this.typingText += words[i];
+                // Faster for whitespace, slight pause for words
+                const delay = words[i].trim() ? 35 : 10;
+                await new Promise(r => setTimeout(r, delay));
+            }
+
+            // Done typing
+            this.typingIndex = -1;
+            this.typingText = '';
+        },
+
+        isTyping(index) {
+            return this.typingIndex === index;
+        },
+
+        getDisplayContent(msg, index) {
+            if (this.isTyping(index)) {
+                return this.typingText;
+            }
+            return msg.content;
         },
 
         useExample(text) {
@@ -670,10 +701,12 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
+                this.loading = false;
+                this.typeMessage(this.messages.length - 1);
             } catch (e) {
                 this.error = 'Unable to connect. Please try again.';
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         async sendMessage() {
@@ -690,10 +723,12 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
+                this.loading = false;
+                this.typeMessage(this.messages.length - 1);
             } catch (e) {
                 this.error = 'Unable to connect. Please try again.';
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         async getPriorities() {
@@ -730,10 +765,12 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
+                this.loading = false;
+                this.typeMessage(this.messages.length - 1);
             } catch (e) {
                 this.error = 'Unable to connect. Please try again.';
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         addPriority() {
@@ -776,6 +813,8 @@ document.addEventListener('alpine:init', () => {
             this.choicesTitle = '';
             this.uncertainties = [];
             this.error = null;
+            this.typingIndex = -1;
+            this.typingText = '';
 
             // Pick a new random spiral for variety
             const randomIndex = Math.floor(Math.random() * this.spiralScenarios.length);
