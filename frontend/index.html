@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Second Opinion</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.6/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -657,26 +657,25 @@ document.addEventListener('alpine:init', () => {
             this.typingText = '';
 
             for (let i = 0; i < words.length; i++) {
+                // Abort if a new message started typing
+                if (this.typingIndex !== messageIndex) {
+                    return;
+                }
                 this.typingText += words[i];
                 // Faster for whitespace, slight pause for words
                 const delay = words[i].trim() ? 35 : 10;
                 await new Promise(r => setTimeout(r, delay));
             }
 
-            // Done typing
-            this.typingIndex = -1;
-            this.typingText = '';
+            // Done typing (only clear if still our message)
+            if (this.typingIndex === messageIndex) {
+                this.typingIndex = -1;
+                this.typingText = '';
+            }
         },
 
         isTyping(index) {
             return this.typingIndex === index;
-        },
-
-        getDisplayContent(msg, index) {
-            if (this.isTyping(index)) {
-                return this.typingText;
-            }
-            return msg.content;
         },
 
         useExample(text) {
@@ -699,6 +698,9 @@ document.addEventListener('alpine:init', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages })
                 });
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
                 this.loading = false;
@@ -721,6 +723,9 @@ document.addEventListener('alpine:init', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages })
                 });
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
                 this.loading = false;
@@ -740,6 +745,9 @@ document.addEventListener('alpine:init', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages })
                 });
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
                 const data = await res.json();
                 this.priorities = data.priorities;
                 this.prioritiesSubmitted = false;
@@ -763,6 +771,9 @@ document.addEventListener('alpine:init', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: this.messages })
                 });
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
                 const data = await res.json();
                 this.messages.push({ role: 'assistant', content: data.response });
                 this.loading = false;
@@ -792,6 +803,9 @@ document.addEventListener('alpine:init', () => {
                         priorities: this.prioritiesSubmitted ? this.priorities : []
                     })
                 });
+                if (!res.ok) {
+                    throw new Error(`Server error: ${res.status}`);
+                }
                 const data = await res.json();
                 this.choices = data.choices;
                 this.choicesTitle = data.title;
