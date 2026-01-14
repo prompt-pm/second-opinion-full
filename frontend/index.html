@@ -114,8 +114,8 @@
                 <div x-show="loading" class="text-gray-400 text-sm">Thinking...</div>
             </div>
 
-            <!-- Priorities UI -->
-            <div x-show="priorities.length > 0 && !prioritiesSubmitted" class="glass-card rounded-2xl p-5 mb-6">
+            <!-- Priorities UI (legacy) -->
+            <div x-show="priorities.length > 0 && !prioritiesSubmitted && !activeWidget" class="glass-card rounded-2xl p-5 mb-6">
                 <h3 class="font-medium mb-3">Rank your priorities <span class="text-gray-400 text-sm">(drag to reorder)</span></h3>
                 <ul class="space-y-2 mb-4">
                     <template x-for="(p, i) in priorities" :key="i">
@@ -153,6 +153,229 @@
                 <button @click="submitPriorities" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl text-sm transition-all">
                     Confirm Ranking
                 </button>
+            </div>
+
+            <!-- WIDGET: Story Prompts -->
+            <div x-show="activeWidget?.type === 'show_story_prompts'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-4">Let's discover what matters</h3>
+                <p class="text-gray-400 text-sm mb-4">Sometimes we know what we want but can't name it. Let's try a different approach.</p>
+
+                <template x-if="extractedPriorities.length === 0">
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2">Best case: 1 year from now, you LOVE this decision. What's happening?</label>
+                        <textarea x-model="storyBestCase" class="glass-input w-full rounded-xl p-3 text-white text-sm mb-4 min-h-[80px]" placeholder="I'm happy because..."></textarea>
+
+                        <label class="block text-sm text-gray-300 mb-2">Worst case: 1 year from now, you REGRET it. What went wrong?</label>
+                        <textarea x-model="storyWorstCase" class="glass-input w-full rounded-xl p-3 text-white text-sm mb-4 min-h-[80px]" placeholder="I regret it because..."></textarea>
+
+                        <button @click="submitStories" :disabled="!storyBestCase.trim() || !storyWorstCase.trim() || loading" class="bg-blue-500 hover:bg-blue-600 disabled:opacity-30 text-white px-5 py-2 rounded-xl text-sm">
+                            Extract what matters
+                        </button>
+                    </div>
+                </template>
+
+                <template x-if="extractedPriorities.length > 0">
+                    <div>
+                        <p class="text-sm text-gray-300 mb-3">Based on your scenarios, here's what seems to matter:</p>
+                        <ul class="space-y-2 mb-4">
+                            <template x-for="p in extractedPriorities">
+                                <li class="glass-chip rounded-xl p-3 text-sm flex items-center">
+                                    <span class="text-green-400 mr-2">✓</span>
+                                    <span x-text="p"></span>
+                                </li>
+                            </template>
+                        </ul>
+                        <button @click="confirmExtractedPriorities" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl text-sm">
+                            These look right
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- WIDGET: Card Sort -->
+            <div x-show="activeWidget?.type === 'show_card_sort'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-2">What matters in this decision?</h3>
+                <p class="text-gray-400 text-sm mb-4">Select all that apply:</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                    <template x-for="card in activeWidget?.params?.cards || []">
+                        <button
+                            @click="toggleCard(card)"
+                            :class="selectedCards.some(c => c.label === card.label) ? 'bg-blue-500/30 border-blue-400' : 'glass-chip'"
+                            class="rounded-xl p-3 text-left border border-transparent hover:border-blue-400/50 transition-all"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span x-text="card.emoji"></span>
+                                <span class="text-sm font-medium" x-text="card.label"></span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1" x-text="card.desc"></p>
+                        </button>
+                    </template>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Selected: <span x-text="selectedCards.length"></span></span>
+                    <button @click="submitCards" :disabled="selectedCards.length === 0" class="bg-green-500 hover:bg-green-600 disabled:opacity-30 text-white px-5 py-2 rounded-xl text-sm">
+                        Continue
+                    </button>
+                </div>
+            </div>
+
+            <!-- WIDGET: Priority Tournament -->
+            <div x-show="activeWidget?.type === 'show_priority_tournament'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-2">Which matters more?</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                    Matchup <span x-text="currentMatchupIndex + 1"></span> of <span x-text="tournamentMatchups.length"></span>
+                </p>
+
+                <template x-if="tournamentMatchups[currentMatchupIndex]">
+                    <div class="flex gap-4">
+                        <button
+                            @click="pickWinner(tournamentMatchups[currentMatchupIndex].a)"
+                            class="flex-1 glass-chip hover:bg-blue-500/20 hover:border-blue-400 rounded-xl p-6 text-center transition-all"
+                        >
+                            <span class="text-lg" x-text="tournamentMatchups[currentMatchupIndex].a"></span>
+                        </button>
+                        <span class="self-center text-gray-500">vs</span>
+                        <button
+                            @click="pickWinner(tournamentMatchups[currentMatchupIndex].b)"
+                            class="flex-1 glass-chip hover:bg-blue-500/20 hover:border-blue-400 rounded-xl p-6 text-center transition-all"
+                        >
+                            <span class="text-lg" x-text="tournamentMatchups[currentMatchupIndex].b"></span>
+                        </button>
+                    </div>
+                </template>
+
+                <p class="text-xs text-gray-500 mt-4 text-center">Go with your gut. There's no wrong answer.</p>
+            </div>
+
+            <!-- WIDGET: Budget Allocation -->
+            <div x-show="activeWidget?.type === 'show_budget_allocation'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-2">Distribute 100 points</h3>
+                <p class="text-gray-400 text-sm mb-4">
+                    Remaining: <span x-text="100 - totalAllocated" :class="totalAllocated === 100 ? 'text-green-400' : 'text-yellow-400'"></span>
+                </p>
+
+                <div class="space-y-4 mb-4">
+                    <template x-for="(value, key) in budgetAllocations" :key="key">
+                        <div class="flex items-center gap-4">
+                            <span class="w-32 text-sm truncate" x-text="key"></span>
+                            <input type="range" min="0" max="100" x-model.number="budgetAllocations[key]" class="flex-1 accent-blue-500">
+                            <span class="w-12 text-right text-sm" x-text="budgetAllocations[key] + '%'"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <button @click="submitBudget" :disabled="totalAllocated !== 100" class="bg-green-500 hover:bg-green-600 disabled:opacity-30 text-white px-5 py-2 rounded-xl text-sm">
+                    Lock it in
+                </button>
+            </div>
+
+            <!-- WIDGET: Elimination Game -->
+            <div x-show="activeWidget?.type === 'show_elimination_game'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-2">Remove the one you could most live without</h3>
+                <p class="text-gray-400 text-sm mb-4">Keep going until you have 3-4 remaining.</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                    <template x-for="p in eliminationRemaining">
+                        <button @click="eliminatePriority(p)" class="glass-chip hover:bg-red-500/20 hover:border-red-400 rounded-xl p-4 text-sm group relative transition-all">
+                            <span x-text="p"></span>
+                            <span class="absolute top-1 right-2 text-red-400 opacity-0 group-hover:opacity-100">×</span>
+                        </button>
+                    </template>
+                </div>
+
+                <div x-show="eliminationRemoved.length > 0" class="text-xs text-gray-500">
+                    Eliminated: <span x-text="eliminationRemoved.join(', ')"></span>
+                </div>
+            </div>
+
+            <!-- WIDGET: Recommendation -->
+            <div x-show="activeWidget?.type === 'show_recommendation'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-4">Based on your priorities</h3>
+
+                <div class="space-y-3 mb-4">
+                    <template x-for="option in activeWidget?.params?.options || []">
+                        <div class="glass-chip rounded-xl p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium" x-text="option.name"></span>
+                                <span class="text-blue-400 font-bold" x-text="option.score + '/100'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="() => { const top = activeWidget?.params?.options?.[0]; if(top) { messages.push({role:'user', content: 'I\\'ll go with ' + top.name}); activeWidget = null; sendFollowUp(); }}"
+                        class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl text-sm"
+                    >
+                        I'll go with the top choice
+                    </button>
+                    <button
+                        @click="() => { messages.push({role:'user', content: 'I need more time to think about this...'}); activeWidget = null; sendFollowUp(); }"
+                        class="glass-chip px-4 py-2 rounded-xl text-sm"
+                    >
+                        Need more time...
+                    </button>
+                </div>
+            </div>
+
+            <!-- WIDGET: Tradeoff Acknowledgment -->
+            <div x-show="activeWidget?.type === 'show_tradeoff_acknowledgment'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-4">The trade-off you're making</h3>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <h4 class="text-green-400 text-sm font-medium mb-2">You're getting</h4>
+                        <ul class="space-y-1">
+                            <template x-for="item in activeWidget?.params?.gaining || []">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <span class="text-green-400">✓</span>
+                                    <span x-text="item"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-red-400 text-sm font-medium mb-2">You're giving up</h4>
+                        <ul class="space-y-1">
+                            <template x-for="item in activeWidget?.params?.sacrificing || []">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <span class="text-red-400">×</span>
+                                    <span x-text="item"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
+                <button @click="acceptTradeoff" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-xl text-sm">
+                    I accept this trade-off
+                </button>
+            </div>
+
+            <!-- WIDGET: Premortem -->
+            <div x-show="activeWidget?.type === 'show_premortem'" class="glass-card rounded-2xl p-5 mb-6">
+                <h3 class="font-medium mb-4">The worst realistic outcome</h3>
+
+                <div class="glass-input rounded-xl p-4 mb-4 text-gray-300 text-sm">
+                    <p x-text="activeWidget?.params?.worst_case"></p>
+                </div>
+
+                <p class="text-sm text-gray-400 mb-4">Can you live with this risk?</p>
+
+                <div class="flex gap-3">
+                    <button @click="acceptRisk" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl text-sm">
+                        Yes, I can live with this
+                    </button>
+                    <button
+                        @click="() => { messages.push({role:'user', content: 'Actually, this changes things...'}); activeWidget = null; sendFollowUp(); }"
+                        class="glass-chip px-4 py-2 rounded-xl text-sm"
+                    >
+                        No, this changes things
+                    </button>
+                </div>
             </div>
 
             <!-- Input -->
@@ -201,6 +424,19 @@ document.addEventListener('alpine:init', () => {
         examples: [],
         newPriority: '',
 
+        // Widget state
+        activeWidget: null,
+        storyBestCase: '',
+        storyWorstCase: '',
+        selectedCards: [],
+        extractedPriorities: [],
+        tournamentMatchups: [],
+        currentMatchupIndex: 0,
+        tournamentResults: [],
+        budgetAllocations: {},
+        eliminationRemaining: [],
+        eliminationRemoved: [],
+
         allExamples: [
             { emoji: '💼', label: 'Should I take this job?', text: 'Should I take this job offer?' },
             { emoji: '💼', label: 'Should I ask for a raise?', text: 'Should I ask my boss for a raise?' },
@@ -244,7 +480,13 @@ document.addEventListener('alpine:init', () => {
                     body: JSON.stringify({ messages: this.messages })
                 });
                 const data = await res.json();
-                this.messages.push({ role: 'assistant', content: data.response });
+                if (data.response) {
+                    this.messages.push({ role: 'assistant', content: data.response });
+                }
+                // Handle widget if AI called a tool
+                if (data.widget) {
+                    this.handleWidget(data.widget);
+                }
             } catch (e) {
                 this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
             }
@@ -255,6 +497,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.input.trim() || this.loading) return;
             this.messages.push({ role: 'user', content: this.input });
             this.input = '';
+            this.activeWidget = null; // Clear any active widget
             this.loading = true;
             try {
                 const res = await fetch('/api/chat', {
@@ -263,7 +506,205 @@ document.addEventListener('alpine:init', () => {
                     body: JSON.stringify({ messages: this.messages })
                 });
                 const data = await res.json();
-                this.messages.push({ role: 'assistant', content: data.response });
+                if (data.response) {
+                    this.messages.push({ role: 'assistant', content: data.response });
+                }
+                // Handle widget if AI called a tool
+                if (data.widget) {
+                    this.handleWidget(data.widget);
+                }
+            } catch (e) {
+                this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
+            }
+            this.loading = false;
+        },
+
+        handleWidget(widget) {
+            this.activeWidget = widget;
+
+            // Initialize widget-specific state
+            switch (widget.type) {
+                case 'show_story_prompts':
+                    this.storyBestCase = '';
+                    this.storyWorstCase = '';
+                    break;
+                case 'show_card_sort':
+                    this.selectedCards = [];
+                    break;
+                case 'show_priority_tournament':
+                    this.initTournament(widget.params.priorities);
+                    break;
+                case 'show_budget_allocation':
+                    this.initBudget(widget.params.priorities);
+                    break;
+                case 'show_elimination_game':
+                    this.eliminationRemaining = [...widget.params.priorities];
+                    this.eliminationRemoved = [];
+                    break;
+            }
+        },
+
+        // Story prompts widget
+        async submitStories() {
+            if (!this.storyBestCase.trim() || !this.storyWorstCase.trim()) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/api/extract-priorities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        best_case: this.storyBestCase,
+                        worst_case: this.storyWorstCase
+                    })
+                });
+                const data = await res.json();
+                this.extractedPriorities = data.priorities || [];
+            } catch (e) {
+                alert('Error extracting priorities: ' + e.message);
+            }
+            this.loading = false;
+        },
+
+        confirmExtractedPriorities() {
+            const prioritiesText = this.extractedPriorities.join(', ');
+            this.messages.push({ role: 'user', content: `Based on my scenarios, here are my priorities: ${prioritiesText}` });
+            this.activeWidget = null;
+            this.extractedPriorities = [];
+            this.sendFollowUp();
+        },
+
+        // Card sort widget
+        toggleCard(card) {
+            const idx = this.selectedCards.findIndex(c => c.label === card.label);
+            if (idx >= 0) {
+                this.selectedCards.splice(idx, 1);
+            } else {
+                this.selectedCards.push(card);
+            }
+        },
+
+        submitCards() {
+            if (this.selectedCards.length === 0) return;
+            const prioritiesText = this.selectedCards.map(c => c.label).join(', ');
+            this.messages.push({ role: 'user', content: `The priorities that matter to me are: ${prioritiesText}` });
+            this.activeWidget = null;
+            this.selectedCards = [];
+            this.sendFollowUp();
+        },
+
+        // Tournament widget
+        initTournament(priorities) {
+            const matchups = [];
+            for (let i = 0; i < priorities.length; i++) {
+                for (let j = i + 1; j < priorities.length; j++) {
+                    matchups.push({ a: priorities[i], b: priorities[j] });
+                }
+            }
+            // Shuffle matchups
+            for (let i = matchups.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [matchups[i], matchups[j]] = [matchups[j], matchups[i]];
+            }
+            this.tournamentMatchups = matchups;
+            this.currentMatchupIndex = 0;
+            this.tournamentResults = [];
+        },
+
+        pickWinner(winner) {
+            this.tournamentResults.push({ winner });
+            this.currentMatchupIndex++;
+
+            if (this.currentMatchupIndex >= this.tournamentMatchups.length) {
+                this.finishTournament();
+            }
+        },
+
+        finishTournament() {
+            // Count wins
+            const priorities = [...new Set(this.tournamentMatchups.flatMap(m => [m.a, m.b]))];
+            const wins = {};
+            priorities.forEach(p => wins[p] = 0);
+            this.tournamentResults.forEach(r => wins[r.winner]++);
+
+            // Sort by wins
+            const ranked = Object.entries(wins)
+                .sort((a, b) => b[1] - a[1])
+                .map(([p]) => p);
+
+            const rankingText = ranked.map((p, i) => `${i + 1}. ${p}`).join(', ');
+            this.messages.push({ role: 'user', content: `My priorities ranked: ${rankingText}` });
+            this.activeWidget = null;
+            this.sendFollowUp();
+        },
+
+        // Budget allocation widget
+        initBudget(priorities) {
+            const evenSplit = Math.floor(100 / priorities.length);
+            this.budgetAllocations = {};
+            priorities.forEach((p, i) => {
+                this.budgetAllocations[p] = i === 0 ? 100 - (evenSplit * (priorities.length - 1)) : evenSplit;
+            });
+        },
+
+        get totalAllocated() {
+            return Object.values(this.budgetAllocations).reduce((a, b) => a + b, 0);
+        },
+
+        submitBudget() {
+            if (this.totalAllocated !== 100) return;
+            const sorted = Object.entries(this.budgetAllocations)
+                .sort((a, b) => b[1] - a[1])
+                .map(([p, w]) => `${p} (${w}%)`);
+            this.messages.push({ role: 'user', content: `My priority weights: ${sorted.join(', ')}` });
+            this.activeWidget = null;
+            this.sendFollowUp();
+        },
+
+        // Elimination widget
+        eliminatePriority(p) {
+            this.eliminationRemoved.push(p);
+            this.eliminationRemaining = this.eliminationRemaining.filter(x => x !== p);
+
+            if (this.eliminationRemaining.length <= 4) {
+                const remainingText = this.eliminationRemaining.join(', ');
+                this.messages.push({ role: 'user', content: `After elimination, my top priorities are: ${remainingText}` });
+                this.activeWidget = null;
+                this.sendFollowUp();
+            }
+        },
+
+        // Tradeoff widget
+        acceptTradeoff() {
+            const choice = this.activeWidget?.params?.choice || 'this option';
+            this.messages.push({ role: 'user', content: `I accept the trade-offs for ${choice}. I understand what I'm gaining and sacrificing.` });
+            this.activeWidget = null;
+            this.sendFollowUp();
+        },
+
+        // Premortem widget
+        acceptRisk() {
+            const choice = this.activeWidget?.params?.choice || 'this option';
+            this.messages.push({ role: 'user', content: `Yes, I can live with the worst case for ${choice}. I'm ready to commit.` });
+            this.activeWidget = null;
+            this.sendFollowUp();
+        },
+
+        // Helper to continue conversation after widget
+        async sendFollowUp() {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: this.messages })
+                });
+                const data = await res.json();
+                if (data.response) {
+                    this.messages.push({ role: 'assistant', content: data.response });
+                }
+                if (data.widget) {
+                    this.handleWidget(data.widget);
+                }
             } catch (e) {
                 this.messages.push({ role: 'assistant', content: 'Error: ' + e.message });
             }
