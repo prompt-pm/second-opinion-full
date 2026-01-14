@@ -6,7 +6,7 @@
     <title>Second Opinion</title>
     <script src="https://cdn.jsdelivr.net/npm/marked@15.0.6/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -37,15 +37,6 @@
             border-color: rgba(255, 255, 255, 0.15);
         }
 
-        /* Custom duration for smoother Apple-style timing */
-        .duration-800 {
-            transition-duration: 800ms;
-        }
-
-        /* GPU acceleration hint for smoother animations */
-        .will-change-transform {
-            will-change: transform, opacity, filter;
-        }
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
@@ -119,19 +110,6 @@
             }
         }
 
-        /* Apple spring approximations - the secret to fluid feel */
-        .apple-spring {
-            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .apple-smooth {
-            transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .apple-bounce {
-            transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .apple-ease {
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        }
 
         /* Subtle fade with scale */
         @keyframes appleFadeIn {
@@ -234,15 +212,6 @@
             box-shadow: 0 0 24px 6px rgba(59, 130, 246, 0.35);
         }
 
-        /* Glass card hover */
-        .glass-card-animated {
-            transition: border-color 0.15s ease-out, box-shadow 0.2s ease-out;
-        }
-
-        .glass-card-animated:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-        }
 
         /* Input focus glow */
         .glass-input:focus {
@@ -251,15 +220,6 @@
             transition: border-color 0.15s ease-out, box-shadow 0.2s ease-out;
         }
 
-        /* Value prop hover */
-        .value-prop {
-            transition: transform 0.12s ease-out, color 0.12s ease-out;
-        }
-
-        .value-prop:hover {
-            transform: translateY(-1px);
-            color: white;
-        }
 
         /* Typewriter cursor */
         @keyframes blink {
@@ -569,9 +529,6 @@ document.addEventListener('alpine:init', () => {
         loading: false,
         priorities: [],
         prioritiesSubmitted: false,
-        choices: [],
-        choicesTitle: '',
-        uncertainties: [],
         dragIndex: null,
         newPriority: '',
         error: null,
@@ -579,6 +536,7 @@ document.addEventListener('alpine:init', () => {
         // Typewriter state
         typingIndex: -1,
         typingText: '',
+        typingGeneration: 0,
 
         // Anxiety spiral scenarios (randomized on load)
         currentSpiral: [],
@@ -647,18 +605,21 @@ document.addEventListener('alpine:init', () => {
 
         renderMarkdown(content) {
             if (!content) return '';
-            return DOMPurify.sanitize(marked.parse(content));
+            return DOMPurify.sanitize(marked.parse(content), {
+                ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i
+            });
         },
 
         async typeMessage(messageIndex) {
             const fullText = this.messages[messageIndex].content;
             const words = fullText.split(/(\s+)/); // Split but keep whitespace
+            const currentGeneration = this.typingGeneration;
             this.typingIndex = messageIndex;
             this.typingText = '';
 
             for (let i = 0; i < words.length; i++) {
-                // Abort if a new message started typing
-                if (this.typingIndex !== messageIndex) {
+                // Abort if a new message started typing or reset was called
+                if (this.typingIndex !== messageIndex || this.typingGeneration !== currentGeneration) {
                     return;
                 }
                 this.typingText += words[i];
@@ -667,8 +628,8 @@ document.addEventListener('alpine:init', () => {
                 await new Promise(r => setTimeout(r, delay));
             }
 
-            // Done typing (only clear if still our message)
-            if (this.typingIndex === messageIndex) {
+            // Done typing (only clear if still our message and same generation)
+            if (this.typingIndex === messageIndex && this.typingGeneration === currentGeneration) {
                 this.typingIndex = -1;
                 this.typingText = '';
             }
@@ -791,31 +752,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        async getChoices() {
-            this.error = null;
-            this.loading = true;
-            try {
-                const res = await fetch('/api/choices', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: this.messages,
-                        priorities: this.prioritiesSubmitted ? this.priorities : []
-                    })
-                });
-                if (!res.ok) {
-                    throw new Error(`Server error: ${res.status}`);
-                }
-                const data = await res.json();
-                this.choices = data.choices;
-                this.choicesTitle = data.title;
-                this.uncertainties = data.uncertainties;
-            } catch (e) {
-                this.error = 'Unable to load choices. Please try again.';
-            }
-            this.loading = false;
-        },
-
         reset() {
             this.inChat = false;
             this.messages = [];
@@ -823,12 +759,10 @@ document.addEventListener('alpine:init', () => {
             this.priorities = [];
             this.prioritiesSubmitted = false;
             this.newPriority = '';
-            this.choices = [];
-            this.choicesTitle = '';
-            this.uncertainties = [];
             this.error = null;
             this.typingIndex = -1;
             this.typingText = '';
+            this.typingGeneration++; // Abort any in-flight typing animations
 
             // Pick a new random spiral for variety
             const randomIndex = Math.floor(Math.random() * this.spiralScenarios.length);
