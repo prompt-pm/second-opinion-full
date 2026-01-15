@@ -27,6 +27,7 @@ def mock_openai_response():
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = "This is a test response from the assistant."
+    mock_response.choices[0].message.tool_calls = None  # No tool calls for basic response
     return mock_response
 
 
