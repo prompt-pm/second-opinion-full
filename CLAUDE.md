@@ -4,6 +4,8 @@ A decision-making assistant that helps users think through choices.
 
 ## Product Overview
 
+For detailed product strategy, principles, and decision-making theory, see [specs/decision-making.md](specs/decision-making.md).
+
 Second Opinion is an AI-powered decision-making tool that guides users through structured thinking when facing difficult choices. The application uses a conversational interface to:
 
 1. Understand the user's decision context through clarifying questions
