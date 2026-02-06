@@ -301,6 +301,21 @@
         .markdown-content h2 { font-size: 1.125rem; }
         .markdown-content h3 { font-size: 1rem; }
 
+        /* Mobile scrolling improvements */
+        .chat-messages-container {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+
+        /* Auto-expanding textarea */
+        .auto-expand-textarea {
+            resize: none;
+            overflow-y: hidden;
+            min-height: 48px;
+            max-height: 120px;
+        }
+
         /* Accessibility: respect user preference for reduced motion */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -377,7 +392,7 @@
             <!-- Messages Area - grows in -->
             <div class="transition-all duration-400 ease-out overflow-hidden"
                  :class="inChat ? 'opacity-100 max-h-[40vh] mb-6' : 'opacity-0 max-h-0 mb-0'">
-                <div class="space-y-4 overflow-y-auto max-h-[40vh]">
+                <div class="space-y-4 overflow-y-auto max-h-[40vh] chat-messages-container">
                     <template x-for="(msg, i) in messages" :key="i">
                         <div :class="msg.role === 'user' ? 'flex justify-end' : ''"
                              x-show="inChat"
@@ -471,17 +486,19 @@
                      x-transition:enter-start="opacity-0"
                      x-transition:enter-end="opacity-100"
                      class="relative">
-                    <input
+                    <textarea
                         x-ref="chatInput"
                         x-model="input"
-                        @keydown.enter="sendMessage"
-                        class="glass-input w-full rounded-xl p-4 pr-14 text-white focus:outline-none focus:border-blue-400/50"
+                        @keydown.enter.prevent="!$event.shiftKey && sendMessage()"
+                        @input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 120) + 'px'"
+                        class="glass-input w-full rounded-xl p-4 pr-14 text-white focus:outline-none focus:border-blue-400/50 auto-expand-textarea"
                         placeholder="Type your message..."
-                    >
+                        rows="1"
+                    ></textarea>
                     <button
                         @click="sendMessage"
                         :disabled="!input.trim() || loading"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 text-white p-2 rounded-lg transition-all"
+                        class="absolute right-2 bottom-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 text-white p-2 rounded-lg transition-all"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
