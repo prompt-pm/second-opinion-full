@@ -25,6 +25,11 @@ class PrioritiesResponse(BaseModel):
     priorities: list[str] = Field(description="3-5 key priorities for this decision")
 
 
+class StoryExtractionRequest(BaseModel):
+    best_case: str = Field(description="User's best case scenario narrative")
+    worst_case: str = Field(description="User's worst case scenario narrative")
+
+
 class Choice(BaseModel):
     name: str = Field(description="Short name for this option, e.g. 'Take the job' or 'Stay put'")
     best_case: str = Field(

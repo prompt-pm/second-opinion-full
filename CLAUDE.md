@@ -1,6 +1,6 @@
-# Second Opinion - Starter Repo
+# Second Opinion
 
-A simple decision-making assistant that helps users think through choices.
+A decision-making assistant that helps users think through choices.
 
 ## Product Overview
 
@@ -23,40 +23,68 @@ The goal is to help users make more informed decisions by breaking down complex 
 
 ```
 .
-├── .context/           # Conductor workspace collaboration (gitignored)
+├── backend/            # FastAPI backend
+│   ├── main.py         # API endpoints and server setup
+│   ├── models.py       # Pydantic request/response models
+│   └── prompts.py      # LLM prompt templates
+├── frontend/           # Frontend application
+│   ├── index.html      # Main HTML page
+│   └── app.js          # Alpine.js application logic
+├── tests/              # Test suites
+│   ├── test_backend.py # Python backend tests (pytest)
+│   └── test_frontend.js # JavaScript frontend tests (vitest)
+├── specs/              # Feature specifications and requirements
+├── config/             # Configuration files
+│   ├── eslint.config.js # ESLint configuration
+│   ├── pyproject.toml  # Python project/ruff configuration
+│   └── vitest.config.js # Vitest test configuration
 ├── .github/            # GitHub Actions workflows
-├── .gitignore          # Git ignore configuration
-├── backend.py          # FastAPI server with API endpoints
-├── conductor.json      # Conductor configuration
-├── index.html          # Single-page frontend with Alpine.js
-├── README.md           # Project readme
-└── requirements.txt    # Python dependencies
+├── Makefile            # Common development commands
+├── package.json        # Frontend dependencies (bun)
+├── requirements.txt    # Python dependencies (uv)
+└── conductor.json      # Conductor configuration
 ```
 
 ## How to Deploy Locally
 
 1. Install dependencies:
 ```bash
-pip install -r requirements.txt
+make install
 ```
 
-2. Set your OpenRouter API key:
+2. Set your OpenRouter API key (or use .env file):
 ```bash
 export OPENROUTER_API_KEY=your_key_here
 ```
 
 3. Run the server:
 ```bash
-python backend.py
+make run
+# or with hot reload:
+make dev
 ```
 
 4. Open http://localhost:7000 in your browser
 
-The application will start a FastAPI server serving both the API endpoints and the static frontend.
+## Development Commands
+
+```bash
+make help           # Show all available commands
+make install        # Install all dependencies
+make run            # Run the backend server
+make dev            # Run with hot reload
+make test           # Run all tests
+make test-backend   # Run Python tests only
+make test-frontend  # Run JavaScript tests only
+make lint           # Run all linters
+make lint-fix       # Fix linting issues
+make format         # Format Python code
+make clean          # Remove generated files
+```
 
 ## API Endpoints
 
-- `GET /` - Serves the frontend (index.html)
+- `GET /` - Serves the frontend (frontend/index.html)
 - `POST /api/chat` - Conversational AI endpoint
-- `POST /api/priorities` - Extract and manage priorities
-- `POST /api/choices` - Generate decision options
+- `POST /api/priorities` - Extract priorities from conversation
+- `POST /api/choices` - Generate decision options with best/worst cases

@@ -22,8 +22,10 @@ from backend.models import (
     ChoicesRequest,
     PrioritiesRequest,
     PrioritiesResponse,
+    StoryExtractionRequest,
 )
 from backend.prompts import CHOICES_PROMPT, PRIORITIES_PROMPT, SYSTEM_PROMPT
+from backend.tools import CARD_SETS, WIDGET_TOOLS
 
 app = FastAPI()
 
@@ -55,11 +57,59 @@ def serve_index():
 
 @app.post("/api/chat")
 def chat(request: ChatRequest):
-    """Simple chat endpoint for conversation."""
+    """Chat endpoint with tool calling support for widgets."""
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += [m.model_dump() for m in request.messages]
-    response = client.chat.completions.create(model=MODEL, messages=messages)
-    return {"response": response.choices[0].message.content}
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        tools=WIDGET_TOOLS,
+        tool_choice="auto",
+    )
+
+    choice = response.choices[0]
+    result = {"response": choice.message.content or ""}
+
+    # Check if AI called a tool
+    if choice.message.tool_calls:
+        tool_call = choice.message.tool_calls[0]
+        result["widget"] = {
+            "type": tool_call.function.name,
+            "params": json.loads(tool_call.function.arguments) if tool_call.function.arguments else {},
+        }
+
+        # For card_sort, include the card set
+        if tool_call.function.name == "show_card_sort":
+            decision_type = result["widget"]["params"].get("decision_type", "other")
+            result["widget"]["params"]["cards"] = CARD_SETS.get(decision_type, CARD_SETS["other"])
+
+    return result
+
+
+@app.post("/api/extract-priorities")
+def extract_priorities_from_stories(request: StoryExtractionRequest):
+    """Extract priorities from best/worst case narratives."""
+    prompt = f"""From these scenarios, extract 3-6 priorities that matter to this person.
+Focus on what they value, not specific details.
+
+BEST CASE (what they want): {request.best_case}
+WORST CASE (what they fear): {request.worst_case}
+
+Return as JSON: {{"priorities": ["priority 1", "priority 2", ...]}}
+Keep each priority to 2-4 words."""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"},
+    )
+
+    try:
+        result = json.loads(response.choices[0].message.content)
+        return result
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Invalid JSON from LLM: {e}") from e
 
 
 @app.post("/api/priorities")
