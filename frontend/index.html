@@ -1185,9 +1185,17 @@ document.addEventListener('alpine:init', () => {
                     throw new Error(`Server error: ${res.status}`);
                 }
                 const data = await res.json();
-                this.messages.push({ role: 'assistant', content: data.response });
+                if (data.response) {
+                    this.messages.push({ role: 'assistant', content: data.response });
+                }
+                // Handle widget if AI called a tool
+                if (data.widget) {
+                    this.handleWidget(data.widget);
+                }
                 this.loading = false;
-                this.typeMessage(this.messages.length - 1);
+                if (data.response) {
+                    this.typeMessage(this.messages.length - 1);
+                }
             } catch (e) {
                 this.error = 'Unable to connect. Please try again.';
                 this.loading = false;
