@@ -47,7 +47,7 @@ bun install
 
 Add your API key to `.env`:
 ```
-OPENROUTER_API_KEY=your-key-here
+GEMINI_API_KEY=your-key-here
 ```
 
 ## Running the App

@@ -52,9 +52,9 @@ The goal is to help users make more informed decisions by breaking down complex 
 make install
 ```
 
-2. Set your OpenRouter API key (or use .env file):
+2. Set your Gemini API key (or use .env file):
 ```bash
-export OPENROUTER_API_KEY=your_key_here
+export GEMINI_API_KEY=your_key_here
 ```
 
 3. Run the server:

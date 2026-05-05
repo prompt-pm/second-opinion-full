@@ -3,6 +3,10 @@ uvicorn
 openai
 instructor
 python-dotenv
+pydantic
+deepagents
+langchain[google-genai]
+google-genai
 
 # Development dependencies
 pytest>=8.0.0
