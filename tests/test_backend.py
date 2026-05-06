@@ -22,12 +22,12 @@ def client():
 
 
 @pytest.fixture
-def mock_openai_response():
-    """Create a mock OpenAI chat completion response."""
+def mock_gemini_response():
+    """Create a mock Gemini/OpenAI chat completion response."""
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = "This is a test response from the assistant."
-    mock_response.choices[0].message.tool_calls = None  # No tool calls for basic response
+    mock_response.choices[0].message.tool_calls = None
     return mock_response
 
 
@@ -44,10 +44,16 @@ class TestServeIndex:
 class TestChatEndpoint:
     """Tests for the /api/chat endpoint."""
 
-    def test_chat_with_valid_message(self, client, mock_openai_response):
+    def test_chat_with_valid_message(self, client):
         """POST /api/chat should return an assistant response."""
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_openai_response
+        mock_agent = MagicMock()
+
+        # Mock _extract_response to avoid needing langchain types
+        with patch("backend.main.get_agent") as mock_get_agent, \
+             patch("backend.main._extract_response") as mock_extract:
+            mock_get_agent.return_value = mock_agent
+            mock_agent.invoke.return_value = {"messages": []}
+            mock_extract.return_value = ("This is a test response from the assistant.", None)
 
             response = client.post(
                 "/api/chat",
@@ -59,10 +65,15 @@ class TestChatEndpoint:
             assert "response" in data
             assert data["response"] == "This is a test response from the assistant."
 
-    def test_chat_with_multiple_messages(self, client, mock_openai_response):
+    def test_chat_with_multiple_messages(self, client):
         """POST /api/chat should handle multiple messages in conversation."""
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_openai_response
+        mock_agent = MagicMock()
+
+        with patch("backend.main.get_agent") as mock_get_agent, \
+             patch("backend.main._extract_response") as mock_extract:
+            mock_get_agent.return_value = mock_agent
+            mock_agent.invoke.return_value = {"messages": []}
+            mock_extract.return_value = ("Response text", None)
 
             messages = [
                 {"role": "user", "content": "Should I move to a new city?"},
@@ -73,14 +84,19 @@ class TestChatEndpoint:
             response = client.post("/api/chat", json={"messages": messages})
 
             assert response.status_code == 200
-            # Verify the messages were passed to the OpenAI client
-            call_args = mock_client.chat.completions.create.call_args
-            assert len(call_args.kwargs["messages"]) == 4  # system + 3 user messages
+            # Verify messages were passed to the agent
+            call_args = mock_agent.invoke.call_args
+            assert len(call_args[0][0]["messages"]) == 3
 
-    def test_chat_with_empty_messages(self, client, mock_openai_response):
+    def test_chat_with_empty_messages(self, client):
         """POST /api/chat should handle empty messages list."""
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_openai_response
+        mock_agent = MagicMock()
+
+        with patch("backend.main.get_agent") as mock_get_agent, \
+             patch("backend.main._extract_response") as mock_extract:
+            mock_get_agent.return_value = mock_agent
+            mock_agent.invoke.return_value = {"messages": []}
+            mock_extract.return_value = ("Response", None)
 
             response = client.post("/api/chat", json={"messages": []})
 
@@ -109,10 +125,14 @@ class TestPrioritiesEndpoint:
             priorities=["Career growth", "Work-life balance", "Salary"]
         )
 
-        with patch("backend.main.instructor") as mock_instructor:
-            mock_structured_client = MagicMock()
-            mock_instructor.from_openai.return_value = mock_structured_client
-            mock_structured_client.chat.completions.create.return_value = mock_priorities
+        mock_gemini = MagicMock()
+        mock_structured = MagicMock()
+
+        with patch("backend.main.get_gemini_client") as mock_get_client, \
+             patch("backend.main.instructor") as mock_instructor:
+            mock_get_client.return_value = mock_gemini
+            mock_instructor.from_openai.return_value = mock_structured
+            mock_structured.chat.completions.create.return_value = mock_priorities
 
             response = client.post(
                 "/api/priorities",
@@ -135,10 +155,14 @@ class TestPrioritiesEndpoint:
         """POST /api/priorities should handle empty conversation."""
         mock_priorities = PrioritiesResponse(priorities=[])
 
-        with patch("backend.main.instructor") as mock_instructor:
-            mock_structured_client = MagicMock()
-            mock_instructor.from_openai.return_value = mock_structured_client
-            mock_structured_client.chat.completions.create.return_value = mock_priorities
+        mock_gemini = MagicMock()
+        mock_structured = MagicMock()
+
+        with patch("backend.main.get_gemini_client") as mock_get_client, \
+             patch("backend.main.instructor") as mock_instructor:
+            mock_get_client.return_value = mock_gemini
+            mock_instructor.from_openai.return_value = mock_structured
+            mock_structured.chat.completions.create.return_value = mock_priorities
 
             response = client.post("/api/priorities", json={"messages": []})
 
@@ -179,8 +203,11 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_response
+        mock_gemini = MagicMock()
+
+        with patch("backend.main.get_gemini_client") as mock_get_client:
+            mock_get_client.return_value = mock_gemini
+            mock_gemini.chat.completions.create.return_value = mock_response
 
             response = client.post(
                 "/api/choices",
@@ -213,8 +240,11 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_response
+        mock_gemini = MagicMock()
+
+        with patch("backend.main.get_gemini_client") as mock_get_client:
+            mock_get_client.return_value = mock_gemini
+            mock_gemini.chat.completions.create.return_value = mock_response
 
             response = client.post(
                 "/api/choices",
@@ -224,7 +254,7 @@ class TestChoicesEndpoint:
             assert response.status_code == 200
 
     def test_generate_choices_includes_priorities_in_prompt(self, client):
-        """POST /api/choices should include priorities in the prompt to OpenAI."""
+        """POST /api/choices should include priorities in the prompt."""
         mock_choices_json = {
             "title": "Decision",
             "choices": [{"name": "Option", "best_case": "Good", "worst_case": "Bad"}],
@@ -235,8 +265,11 @@ class TestChoicesEndpoint:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = json.dumps(mock_choices_json)
 
-        with patch("backend.main.client") as mock_client:
-            mock_client.chat.completions.create.return_value = mock_response
+        mock_gemini = MagicMock()
+
+        with patch("backend.main.get_gemini_client") as mock_get_client:
+            mock_get_client.return_value = mock_gemini
+            mock_gemini.chat.completions.create.return_value = mock_response
 
             priorities = ["Stability", "Growth", "Compensation"]
             response = client.post(
@@ -249,7 +282,7 @@ class TestChoicesEndpoint:
 
             assert response.status_code == 200
             # Verify priorities were included in the system message
-            call_args = mock_client.chat.completions.create.call_args
+            call_args = mock_gemini.chat.completions.create.call_args
             system_message = call_args.kwargs["messages"][0]["content"]
             for priority in priorities:
                 assert priority in system_message
